@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn -q compile)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Read(//Applications/**)",
+      "Bash(java -version)",
+      "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" -q compile)",
+      "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" test)",
+      "Bash(curl -s \"https://search.maven.org/solrsearch/select?q=g:org.apache.flink+AND+a:flink-connector-kafka&core=gav&rows=20&wt=json\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(doc['v'] for doc in d['response']['docs']\\)\\)\")",
+      "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" -q test)",
+      "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" compile)",
+      "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" -DskipTests package)",
+      "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" -q -DskipTests package)",
+      "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" -f /Users/orsap/IdeaProjects/hermetrics/pom.xml compile)",
+      "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" -f /Users/orsap/IdeaProjects/hermetrics/pom.xml test)",
+      "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" -f /Users/orsap/IdeaProjects/hermetrics/pom.xml -q -DskipTests package)",
+      "Bash(grep -E \"ExampleConfigsTest|Tests run: [0-9]+, Fail.*Errors.*$|BUILD\")",
+      "Bash(awk '{print $5, $9}')"
+    ]
+  }
+}

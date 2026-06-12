@@ -1,0 +1,87 @@
+{
+  "main": {
+    "clusters": [
+      {
+        "name": "ingest",
+        "bootstrapServers": "main-ingest-kafka:9092",
+        "topics": ["pipeline.input"],
+        "properties": {
+          "security.protocol": "SASL_SSL",
+          "sasl.mechanism": "PLAIN",
+          "sasl.jaas.config": "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"hermetrics\" password=\"CHANGE_ME\";"
+        }
+      },
+      {
+        "name": "core",
+        "bootstrapServers": "main-core-kafka:9092",
+        "topics": ["orders.enriched", "legacy.export"]
+      }
+    ]
+  },
+  "load": {
+    "bootstrapServers": "load-kafka:9092",
+    "groupId": "hermetrics-load",
+    "topicPrefix": "",
+    "topicOverrides": {},
+    "startingOffsets": "latest"
+  },
+  "control": {
+    "bootstrapServers": "load-kafka:9092",
+    "topic": "hermetrics.control"
+  },
+  "results": {
+    "type": "kafka",
+    "options": {
+      "bootstrapServers": "load-kafka:9092",
+      "topic": "hermetrics.verdicts"
+    }
+  },
+  "deadLetters": {
+    "type": "logging"
+  },
+  "rollups": {
+    "windowMillis": 60000,
+    "sink": {
+      "type": "kafka",
+      "options": {
+        "bootstrapServers": "load-kafka:9092",
+        "topic": "hermetrics.rollups"
+      }
+    }
+  },
+  "stateTtlMillis": 7200000,
+  "checkpointIntervalMillis": 60000,
+  "emitEqualVerdicts": true,
+  "compare": {
+    "policy": {
+      "quietMillis": 300000,
+      "maxWaitMillis": 3600000,
+      "strictIntermediates": false,
+      "cohortMode": "ENTRY_TOPICS"
+    },
+    "ruleSets": {
+      "default": {
+        "nullsEqualAbsent": true,
+        "emptyEqualsAbsent": false,
+        "rules": [
+          {"type": "ignore", "path": "**.traceId"},
+          {"type": "ignore", "path": "**.processedAt"},
+          {"type": "mask", "path": "customer.ssn"},
+          {"type": "timeTolerance", "path": "meta.updatedAt", "toleranceMillis": 5000}
+        ]
+      },
+      "orders": {
+        "rules": [
+          {"type": "ignore", "path": "**.traceId"},
+          {"type": "unordered", "path": "items"},
+          {"type": "numberTolerance", "path": "totals.amount", "epsilon": 0.001}
+        ]
+      }
+    },
+    "topics": [
+      {"name": "pipeline.input", "role": "BOTH", "format": "json", "guidPath": "documentGuid"},
+      {"name": "orders.enriched", "role": "OUTPUT", "format": "json", "guidPath": "doc.guid", "ruleSet": "orders"},
+      {"name": "legacy.export", "role": "OUTPUT", "format": "xml", "guidPath": "export.@guid"}
+    ]
+  }
+}

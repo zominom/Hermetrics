@@ -1,0 +1,47 @@
+{
+  "main": {
+    "bootstrapServers": "localhost:9092",
+    "topicPrefix": "main.",
+    "startingOffsets": "earliest"
+  },
+  "load": {
+    "bootstrapServers": "localhost:9092",
+    "topicPrefix": "load.",
+    "startingOffsets": "earliest"
+  },
+  "control": {
+    "bootstrapServers": "localhost:9092",
+    "topic": "hermetrics.control"
+  },
+  "results": {
+    "type": "logging"
+  },
+  "deadLetters": {
+    "type": "logging"
+  },
+  "rollups": {
+    "windowMillis": 15000,
+    "sink": {
+      "type": "logging"
+    }
+  },
+  "stateTtlMillis": 600000,
+  "emitEqualVerdicts": true,
+  "compare": {
+    "policy": {
+      "quietMillis": 5000,
+      "maxWaitMillis": 60000,
+      "cohortMode": "ASSUME_ALL"
+    },
+    "ruleSets": {
+      "default": {
+        "rules": [
+          {"type": "ignore", "path": "**.traceId"}
+        ]
+      }
+    },
+    "topics": [
+      {"name": "orders", "role": "OUTPUT", "format": "json", "guidPath": "guid"}
+    ]
+  }
+}
