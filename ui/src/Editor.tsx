@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 import { CohortMode, CompareConfig, Role, RuleType } from "./types";
+import { Help, HELP } from "./Help";
 
 export function Editor({
   config,
@@ -49,23 +50,23 @@ export function Editor({
         <h2>Policy</h2>
         <div className="row">
           <div className="field">
-            <label>quietMillis</label>
+            <label>quiet (seconds) <Help text={HELP.quietMillis} /></label>
             <input
               type="number"
-              value={config.policy.quietMillis}
-              onChange={(e) => update((c) => (c.policy.quietMillis = +e.target.value))}
+              value={config.policy.quietMillis / 1000}
+              onChange={(e) => update((c) => (c.policy.quietMillis = Math.round(+e.target.value * 1000)))}
             />
           </div>
           <div className="field">
-            <label>maxWaitMillis</label>
+            <label>maxWait (seconds) <Help text={HELP.maxWaitMillis} /></label>
             <input
               type="number"
-              value={config.policy.maxWaitMillis}
-              onChange={(e) => update((c) => (c.policy.maxWaitMillis = +e.target.value))}
+              value={config.policy.maxWaitMillis / 1000}
+              onChange={(e) => update((c) => (c.policy.maxWaitMillis = Math.round(+e.target.value * 1000)))}
             />
           </div>
           <div className="field">
-            <label>cohortMode</label>
+            <label>cohortMode <Help text={HELP.cohortMode} /></label>
             <select
               value={config.policy.cohortMode}
               onChange={(e) => update((c) => (c.policy.cohortMode = e.target.value as CohortMode))}
@@ -75,7 +76,7 @@ export function Editor({
             </select>
           </div>
           <div className="field">
-            <label>strictIntermediates</label>
+            <label>strictIntermediates <Help text={HELP.strictIntermediates} /></label>
             <select
               value={String(config.policy.strictIntermediates)}
               onChange={(e) => update((c) => (c.policy.strictIntermediates = e.target.value === "true"))}
@@ -89,15 +90,21 @@ export function Editor({
 
       <div className="section">
         <h2>Topics</h2>
+        <p className="hint">
+          Editing an existing topic (role, paths, rule set) applies live on Apply. Adding or removing a topic
+          changes which Kafka topics the job consumes — that set is fixed when the job starts, so it needs a
+          redeploy. When main and load use different physical topic names, the mapping lives in the deployment
+          config (per-cluster topicPrefix / topicOverrides), not here — these are the shared logical names.
+        </p>
         <table>
           <thead>
             <tr>
-              <th>name</th>
-              <th>role</th>
-              <th>format</th>
-              <th>guidPath</th>
-              <th>sequencePath</th>
-              <th>ruleSet</th>
+              <th>name <Help text={HELP.topicName} /></th>
+              <th>role <Help text={HELP.role} /></th>
+              <th>format <Help text={HELP.format} /></th>
+              <th>guidPath <Help text={HELP.guidPath} /></th>
+              <th>sequencePath <Help text={HELP.sequencePath} /></th>
+              <th>ruleSet <Help text={HELP.ruleSet} /></th>
               <th />
             </tr>
           </thead>
@@ -172,7 +179,7 @@ export function Editor({
                     checked={rs.nullsEqualAbsent !== false}
                     onChange={(e) => update((c) => (c.ruleSets[name].nullsEqualAbsent = e.target.checked))}
                   />{" "}
-                  nullsEqualAbsent
+                  nullsEqualAbsent <Help text={HELP.nullsEqualAbsent} />
                 </label>
                 <label className="muted">
                   <input
@@ -181,7 +188,7 @@ export function Editor({
                     checked={!!rs.emptyEqualsAbsent}
                     onChange={(e) => update((c) => (c.ruleSets[name].emptyEqualsAbsent = e.target.checked))}
                   />{" "}
-                  emptyEqualsAbsent
+                  emptyEqualsAbsent <Help text={HELP.emptyEqualsAbsent} />
                 </label>
                 {name !== "default" && (
                   <button className="ghost tiny" onClick={() => update((c) => delete c.ruleSets[name])}>
@@ -192,9 +199,9 @@ export function Editor({
               <table>
                 <thead>
                   <tr>
-                    <th style={{ width: 150 }}>type</th>
-                    <th>path</th>
-                    <th>params</th>
+                    <th style={{ width: 150 }}>type <Help text={HELP.ruleType} /></th>
+                    <th>path <Help text={HELP.rulePath} /></th>
+                    <th>params <Help text={HELP.ruleParams} /></th>
                     <th />
                   </tr>
                 </thead>

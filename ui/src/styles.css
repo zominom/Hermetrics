@@ -89,6 +89,7 @@ button:disabled { opacity: 0.5; cursor: default; }
 .badge.ERROR, .badge.DIFF, .badge.MISSING_IN_LOAD { background: rgba(248,81,73,0.15); color: var(--error); }
 
 .muted { color: var(--muted); }
+.hint { color: var(--muted); font-size: 12px; margin: -4px 0 12px; max-width: 880px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 .pill { background: var(--panel2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 7px; font-size: 12px; margin: 2px; display: inline-block; }
 .banner { padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; }
@@ -100,3 +101,45 @@ button:disabled { opacity: 0.5; cursor: default; }
 .stat .k { color: var(--muted); font-size: 12px; }
 a { color: var(--accent); }
 details summary { cursor: pointer; color: var(--muted); }
+
+.help {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-left: 5px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+  cursor: help;
+  user-select: none;
+  vertical-align: middle;
+}
+.help:hover, .help:focus { color: var(--text); border-color: var(--accent); outline: none; }
+.help .tip {
+  display: none;
+  position: absolute;
+  top: 150%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  padding: 8px 10px;
+  background: #0b0f14;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: left;
+  white-space: normal;
+  z-index: 100;
+}
+.help:hover .tip, .help:focus .tip { display: block; }

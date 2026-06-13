@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 import { Finding, Summary } from "./types";
+import { Help, HELP } from "./Help";
 
 export function Dashboard({ onIgnorePath }: { onIgnorePath: (path: string) => void }) {
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -44,7 +45,7 @@ export function Dashboard({ onIgnorePath }: { onIgnorePath: (path: string) => vo
 
       <div className="section">
         <div className="row">
-          <h2 style={{ margin: 0, flex: 1 }}>Parity summary</h2>
+          <h2 style={{ margin: 0, flex: 1 }}>Parity summary <Help text={HELP.paritySummary} /></h2>
           <label className="muted">
             <input type="checkbox" style={{ width: "auto" }} checked={auto} onChange={(e) => setAuto(e.target.checked)} /> auto-refresh
           </label>
@@ -72,7 +73,7 @@ export function Dashboard({ onIgnorePath }: { onIgnorePath: (path: string) => vo
       </div>
 
       <div className="section">
-        <h2>Diff signatures (rollups)</h2>
+        <h2>Diff signatures (rollups) <Help text={HELP.rollups} /></h2>
         <table>
           <thead>
             <tr>
@@ -126,7 +127,7 @@ export function Dashboard({ onIgnorePath }: { onIgnorePath: (path: string) => vo
       </div>
 
       <div className="section">
-        <h2>Recent verdicts</h2>
+        <h2>Recent verdicts <Help text={HELP.verdicts} /></h2>
         <table>
           <thead>
             <tr>
@@ -161,7 +162,7 @@ export function Dashboard({ onIgnorePath }: { onIgnorePath: (path: string) => vo
       </div>
 
       <div className="section">
-        <h2>Dead letters</h2>
+        <h2>Dead letters <Help text={HELP.deadLetters} /></h2>
         <table>
           <thead>
             <tr>
