@@ -34,6 +34,10 @@ public final class RuleTypeRegistry {
         return this;
     }
 
+    public java.util.Set<String> types() {
+        return java.util.Set.copyOf(byType.keySet());
+    }
+
     public RuleFactory forType(String type) {
         RuleFactory factory = byType.get(type);
         if (factory == null) {

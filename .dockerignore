@@ -1,0 +1,15 @@
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+*.iws
+*.ipr
+.mvn/
+*.md
+job-config*.json
+api-config*.json
+ui/
+Dockerfile
+.dockerignore
+docker-compose*.yml

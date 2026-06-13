@@ -107,6 +107,31 @@ Every diff signature it reports is by definition environment noise — turn thos
 into ignore/tolerance rules via the control topic until the stream is quiet.
 Then deploy the release candidate to load: new signatures are the release's diffs.
 
+## Control-plane UI
+
+A web UI (`ui/`, React + Vite) over a thin Java API (`org.foxtrot.hermetrics.api`)
+edits the comparison config and shows parity live — no hand-editing JSON, no
+ad-hoc Kafka consumer. The API reuses `ConfigLoader` for validation and publishes
+changes to the **control topic** (the same hot-swap path the job consumes), so
+"Apply" updates the running job with no restart. The dashboard's *ignore* button
+on a diff signature pre-loads an ignore rule into the editor — the calibration
+loop in one place.
+
+The API ships as its own shaded jar (slf4j bundled; no Flink runtime needed),
+separate from the job jar:
+
+```bash
+mvn package
+java -jar target/hermetrics-1.0-SNAPSHOT-api.jar api-config.json   # serves :8080
+cd ui && npm install && npm run dev                                # serves :5173
+```
+
+`api-config.example.json` documents the API's settings (Kafka bootstrap, the
+control/results/rollups/dead-letter topics, an optional Flink UI link, and a
+bootstrap compare config to show before the control topic has a message).
+Endpoints: `GET /api/rule-types`, `GET|POST /api/config/{active,validate,apply}`,
+`GET /api/{verdicts,rollups,dead-letters,summary}`.
+
 ## Extension points
 
 Everything that can vary sits behind an interface, assembled in one composition

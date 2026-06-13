@@ -1,0 +1,13 @@
+{
+  "port": 8080,
+  "bootstrapServers": "load-kafka:9092",
+  "controlTopic": "hermetrics.control",
+  "resultsTopic": "hermetrics.verdicts",
+  "rollupsTopic": "hermetrics.rollups",
+  "deadLetterTopic": "hermetrics.dead-letters",
+  "flinkUiUrl": "http://localhost:8081",
+  "bootstrapComparePath": "/opt/hermetrics/compare.json",
+  "tailSize": 500,
+  "findingsOffsetReset": "latest",
+  "kafkaProperties": {}
+}

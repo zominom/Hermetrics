@@ -44,7 +44,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>2.0.16</version>
-            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.16</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -78,6 +82,7 @@
                 <version>3.6.0</version>
                 <executions>
                     <execution>
+                        <id>job</id>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
@@ -87,12 +92,36 @@
                                 <excludes>
                                     <exclude>org.apache.flink:flink-streaming-java</exclude>
                                     <exclude>org.apache.flink:flink-clients</exclude>
+                                    <exclude>org.slf4j:*</exclude>
                                 </excludes>
                             </artifactSet>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>org.foxtrot.hermetrics.flink.job.HermetricsJob</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>api</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>api</shadedClassifierName>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.apache.flink:flink-streaming-java</exclude>
+                                    <exclude>org.apache.flink:flink-clients</exclude>
+                                </excludes>
+                            </artifactSet>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>org.foxtrot.hermetrics.api.HermetricsApi</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
