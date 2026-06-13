@@ -43,3 +43,24 @@ export const HELP = {
   deadLetters:
     "Messages that could not become observations — unparseable payload, missing GUID, or a missing declared sequence. A steady stream here is itself a finding (e.g. the new version changed a payload so it no longer parses).",
 } as const;
+
+export const RULE_DOC: Record<string, string> = {
+  ignore:
+    "Removes the matching field (and its whole subtree) before anything else — it can never cause a diff and isn't even hashed. Use for noise: trace ids, timestamps, processing metadata. No parameters.",
+  mask:
+    "Replaces the matching value with *** on both sides before comparing, so the value is never compared or shown in a verdict — only its presence/absence is. Use for PII you must not surface. No parameters.",
+  unordered:
+    "Sorts the matching array before comparing, so element order can't cause diffs. Use when a list's order isn't meaningful. Sorts after child rules run, so ignored sub-fields don't affect the order. No parameters.",
+  numberTolerance:
+    "Treats two numbers at the matching path as equal when they differ by at most epsilon — absorbs floating-point drift and rounding. Applies only to numeric values. Parameter: epsilon.",
+  timeTolerance:
+    "Treats two timestamps at the matching path as equal when they differ by at most toleranceMillis. Accepts ISO-8601 strings or epoch numbers, so it absorbs clock skew between environments. Parameters: toleranceMillis, epochUnit.",
+};
+
+export const PARAM_DOC: Record<string, string> = {
+  epsilon: "Maximum absolute numeric difference still treated as equal — e.g. 0.001 ignores sub-thousandth drift.",
+  toleranceMillis:
+    "Maximum time difference still treated as equal, in milliseconds (e.g. 5000 = 5 seconds). The field may be an ISO-8601 string or an epoch number.",
+  epochUnit:
+    "Only used when the timestamp is a number — is it epoch MILLIS or SECONDS? Ignored for ISO-8601 string values. Defaults to MILLIS.",
+};

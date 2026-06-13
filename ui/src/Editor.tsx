@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 import { CohortMode, CompareConfig, Role, RuleType } from "./types";
-import { Help, HELP } from "./Help";
+import { Help, HELP, RULE_DOC, PARAM_DOC } from "./Help";
 
 export function Editor({
   config,
@@ -209,14 +209,18 @@ export function Editor({
                   {rs.rules.map((rule, ri) => (
                     <tr key={ri}>
                       <td>
-                        <select
-                          value={rule.type}
-                          onChange={(e) => update((c) => (c.ruleSets[name].rules[ri] = { type: e.target.value, path: rule.path }))}
-                        >
-                          {ruleTypes.map((rt) => (
-                            <option key={rt.type}>{rt.type}</option>
-                          ))}
-                        </select>
+                        <div className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
+                          <select
+                            style={{ flex: 1, minWidth: 0 }}
+                            value={rule.type}
+                            onChange={(e) => update((c) => (c.ruleSets[name].rules[ri] = { type: e.target.value, path: rule.path }))}
+                          >
+                            {ruleTypes.map((rt) => (
+                              <option key={rt.type}>{rt.type}</option>
+                            ))}
+                          </select>
+                          <Help text={RULE_DOC[rule.type] ?? "Custom rule type registered in RuleTypeRegistry."} />
+                        </div>
                       </td>
                       <td>
                         <input
@@ -228,16 +232,24 @@ export function Editor({
                       <td>
                         <div className="row">
                           {paramsFor(rule.type).map((p) => (
-                            <input
-                              key={p.name}
-                              placeholder={p.name}
-                              style={{ width: 130 }}
-                              value={String(rule[p.name] ?? "")}
-                              onChange={(e) =>
-                                update((c) => ((c.ruleSets[name].rules[ri] as any)[p.name] = coerce(p.kind, e.target.value)))
-                              }
-                            />
+                            <span key={p.name} className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
+                              <input
+                                placeholder={p.name}
+                                title={PARAM_DOC[p.name] ?? p.name}
+                                style={{ width: 130 }}
+                                value={String(rule[p.name] ?? "")}
+                                onChange={(e) =>
+                                  update((c) => ((c.ruleSets[name].rules[ri] as any)[p.name] = coerce(p.kind, e.target.value)))
+                                }
+                              />
+                              {PARAM_DOC[p.name] && <Help text={PARAM_DOC[p.name]} />}
+                            </span>
                           ))}
+                          {paramsFor(rule.type).length === 0 && (
+                            <span className="muted" style={{ fontSize: 12 }}>
+                              no parameters
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td>
