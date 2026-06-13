@@ -1,6 +1,6 @@
 package org.foxtrot.hermetrics.rules;
 
-import org.foxtrot.hermetrics.canonical.PathPattern;
+import org.foxtrot.hermetrics.canonical.path.PathPattern;
 
 import java.io.Serializable;
 

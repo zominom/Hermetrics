@@ -30,17 +30,51 @@ paths are verified only by unit tests plus `PipelineGraphTest`.
 
 ## Architecture
 
-**Layering invariant: the core never imports Flink.** Packages `canonical`,
-`decode`, `rules` (+`rules.builtin`), `diff`, `match`, `pipeline`, `config`,
-`report` are pure JVM and unit-tested directly; only `flink` and its
-subpackages (`flink.config` deployment config, `flink.operator` functions,
-`flink.sink` destinations) touch Flink. New comparison logic belongs in the
-core with tests; the Flink layer stays a thin shell of sources/state/timers/sinks.
+**Layering invariant: the core never imports Flink.** The core packages
+(`canonical.*`, `decode.*`, `rules.*`, `diff.*`, `match.*`, `pipeline`,
+`config`, `report.*`) are pure JVM and unit-tested directly; only `flink` and
+its subpackages touch Flink. New comparison logic belongs in the core with
+tests; the Flink layer stays a thin shell of sources/state/timers/sinks.
 
-**File layout convention:** one top-level type per file; nested types only for
-trivial discriminators (`Observation.Kind`, `TopicConfig.Role`, `Path.Segment`).
-The job entry is split by responsibility: `HermetricsJob` (main),
-`Topology` (stream graph), `KafkaSources` (source builders).
+**Package map** (one top-level type per file; nested types only for trivial
+discriminators like `Observation.Kind`, `TopicConfig.Role`, `Path.Segment`):
+
+```
+canonical/value   sealed CanonicalValue + 6 variants   (move as a unit — sealed)
+canonical/json    CanonicalJsonWriter, CanonicalJsonReader, ContentHasher
+canonical/path    Path, PathPattern, PathPatternParser
+decode            PayloadDecoder (SPI), DecoderRegistry, RawMessage, DecodeException
+decode/format     JsonPayloadDecoder, XmlPayloadDecoder
+rules             NormalizationRule, TreeRewriteRule, EquivalenceRule, RuleSet, Normalizer
+rules/loader      RuleFactory, RuleSetLoader, RuleTypeRegistry
+rules/builtin     Ignore/Mask/Unordered/NumberTolerance/TimeTolerance rules
+diff              Differ (SPI), FieldDiff, DiffSignature
+diff/algorithm    StructuralDiffer
+match             MatchEngine, MatchPolicy, Env, Observation
+match/state       GuidState, TopicPair, Timeline, StateVersion
+match/verdict     Verdict, VerdictStatus, Severity, VerdictStats
+pipeline          ObservationFactory, FieldExtractor
+config            CompareConfig, TopicConfig, ConfigLoader
+report            FindingCodec (SPI), DeadLetter, Rollup
+report/codec      JsonFindingCodec
+flink             HermetricsJob, Topology, Plugins, DefaultPlugins, ControlChannel
+flink/source      KafkaSources, EnvRecordDeserializer
+flink/record      RawEnvRecord, KeyedRecord, VerdictSummary
+flink/config      JobConfig, EnvConfig, ClusterConfig, ControlConfig, SinkConfig, RollupConfig, JobConfigLoader
+flink/operator    NormalizeFunction, DecideFunction, Rollup{Aggregator,Accumulator,Emitter}
+flink/sink        FindingSinkFactory, SinkRegistry, KafkaSinkFactory, Logging{Sink,SinkFactory}
+```
+
+**Layout convention — every extension axis follows one shape: SPI + DTOs at the
+package root, implementations in a subpackage** (`decode/format`, `rules/builtin`,
+`diff/algorithm`, `report/codec`, `flink/sink`). Adding a format/rule/differ/
+codec/sink = drop a file in the obvious subpackage and register it in `Plugins`.
+The job entry is split by responsibility: `HermetricsJob` (main), `Topology`
+(stream graph), `KafkaSources` (source builders).
+
+**Sealed-type constraint:** `CanonicalValue` and its 6 permitted variants live
+together in `canonical/value` — Java's unnamed module requires permitted
+subtypes in the same package, so they always move as a unit.
 
 Data flow: bytes → `PayloadDecoder` → `CanonicalValue` tree → GUID extraction →
 `Normalizer` (rule rewrites) → canonical JSON string + content hash

@@ -1,8 +1,8 @@
 package org.foxtrot.hermetrics.match;
 
-import org.foxtrot.hermetrics.canonical.CanonicalJsonWriter;
-import org.foxtrot.hermetrics.canonical.CanonicalValue;
-import org.foxtrot.hermetrics.canonical.ContentHasher;
+import org.foxtrot.hermetrics.canonical.json.CanonicalJsonWriter;
+import org.foxtrot.hermetrics.canonical.value.CanonicalValue;
+import org.foxtrot.hermetrics.canonical.json.ContentHasher;
 
 import java.io.Serializable;
 

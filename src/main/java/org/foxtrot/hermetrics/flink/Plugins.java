@@ -6,8 +6,8 @@ import org.foxtrot.hermetrics.diff.Differ;
 import org.foxtrot.hermetrics.flink.sink.SinkRegistry;
 import org.foxtrot.hermetrics.report.FindingCodec;
 import org.foxtrot.hermetrics.rules.Normalizer;
-import org.foxtrot.hermetrics.rules.RuleSetLoader;
-import org.foxtrot.hermetrics.rules.RuleTypeRegistry;
+import org.foxtrot.hermetrics.rules.loader.RuleSetLoader;
+import org.foxtrot.hermetrics.rules.loader.RuleTypeRegistry;
 
 import java.io.Serializable;
 

@@ -1,7 +1,7 @@
 package org.foxtrot.hermetrics.flink.operator;
 
 import org.apache.flink.api.common.functions.AggregateFunction;
-import org.foxtrot.hermetrics.flink.VerdictSummary;
+import org.foxtrot.hermetrics.flink.record.VerdictSummary;
 
 public final class RollupAggregator implements AggregateFunction<VerdictSummary, RollupAccumulator, RollupAccumulator> {
 

@@ -1,6 +1,6 @@
 package org.foxtrot.hermetrics.flink.operator;
 
-import org.foxtrot.hermetrics.flink.VerdictSummary;
+import org.foxtrot.hermetrics.flink.record.VerdictSummary;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

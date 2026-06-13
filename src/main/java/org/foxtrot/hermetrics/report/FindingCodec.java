@@ -1,6 +1,6 @@
 package org.foxtrot.hermetrics.report;
 
-import org.foxtrot.hermetrics.match.Verdict;
+import org.foxtrot.hermetrics.match.verdict.Verdict;
 
 import java.io.Serializable;
 

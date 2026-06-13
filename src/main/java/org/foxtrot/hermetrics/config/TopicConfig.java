@@ -1,6 +1,6 @@
 package org.foxtrot.hermetrics.config;
 
-import org.foxtrot.hermetrics.canonical.Path;
+import org.foxtrot.hermetrics.canonical.path.Path;
 
 import java.io.Serializable;
 import java.util.List;

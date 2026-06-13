@@ -1,7 +1,16 @@
 package org.foxtrot.hermetrics.match;
 
-import org.foxtrot.hermetrics.canonical.CanonicalJsonReader;
-import org.foxtrot.hermetrics.canonical.CanonicalValue;
+import org.foxtrot.hermetrics.match.state.GuidState;
+import org.foxtrot.hermetrics.match.state.StateVersion;
+import org.foxtrot.hermetrics.match.state.Timeline;
+import org.foxtrot.hermetrics.match.state.TopicPair;
+import org.foxtrot.hermetrics.match.verdict.Severity;
+import org.foxtrot.hermetrics.match.verdict.Verdict;
+import org.foxtrot.hermetrics.match.verdict.VerdictStats;
+import org.foxtrot.hermetrics.match.verdict.VerdictStatus;
+
+import org.foxtrot.hermetrics.canonical.json.CanonicalJsonReader;
+import org.foxtrot.hermetrics.canonical.value.CanonicalValue;
 import org.foxtrot.hermetrics.diff.Differ;
 import org.foxtrot.hermetrics.diff.DiffSignature;
 import org.foxtrot.hermetrics.diff.FieldDiff;

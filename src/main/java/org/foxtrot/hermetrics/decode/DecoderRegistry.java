@@ -1,5 +1,8 @@
 package org.foxtrot.hermetrics.decode;
 
+import org.foxtrot.hermetrics.decode.format.JsonPayloadDecoder;
+import org.foxtrot.hermetrics.decode.format.XmlPayloadDecoder;
+
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;

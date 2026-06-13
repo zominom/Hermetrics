@@ -1,9 +1,12 @@
 package org.foxtrot.hermetrics.rules;
 
-import org.foxtrot.hermetrics.canonical.CanonicalJsonWriter;
-import org.foxtrot.hermetrics.canonical.CanonicalString;
-import org.foxtrot.hermetrics.canonical.CanonicalValue;
-import org.foxtrot.hermetrics.canonical.PathPattern;
+import org.foxtrot.hermetrics.rules.loader.RuleSetLoader;
+import org.foxtrot.hermetrics.rules.loader.RuleTypeRegistry;
+
+import org.foxtrot.hermetrics.canonical.json.CanonicalJsonWriter;
+import org.foxtrot.hermetrics.canonical.value.CanonicalString;
+import org.foxtrot.hermetrics.canonical.value.CanonicalValue;
+import org.foxtrot.hermetrics.canonical.path.PathPattern;
 import org.foxtrot.hermetrics.rules.builtin.NumberToleranceRule;
 import org.junit.jupiter.api.Test;
 

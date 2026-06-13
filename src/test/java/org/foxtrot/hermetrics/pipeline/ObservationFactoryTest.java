@@ -5,14 +5,14 @@ import org.foxtrot.hermetrics.config.ConfigLoader;
 import org.foxtrot.hermetrics.decode.DecodeException;
 import org.foxtrot.hermetrics.decode.DecoderRegistry;
 import org.foxtrot.hermetrics.decode.RawMessage;
-import org.foxtrot.hermetrics.diff.StructuralDiffer;
+import org.foxtrot.hermetrics.diff.algorithm.StructuralDiffer;
 import org.foxtrot.hermetrics.match.Env;
-import org.foxtrot.hermetrics.match.GuidState;
+import org.foxtrot.hermetrics.match.state.GuidState;
 import org.foxtrot.hermetrics.match.MatchEngine;
 import org.foxtrot.hermetrics.match.MatchPolicy;
 import org.foxtrot.hermetrics.match.Observation;
-import org.foxtrot.hermetrics.match.Verdict;
-import org.foxtrot.hermetrics.match.VerdictStatus;
+import org.foxtrot.hermetrics.match.verdict.Verdict;
+import org.foxtrot.hermetrics.match.verdict.VerdictStatus;
 import org.foxtrot.hermetrics.rules.Normalizer;
 import org.junit.jupiter.api.Test;
 

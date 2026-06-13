@@ -1,10 +1,10 @@
 package org.foxtrot.hermetrics.rules;
 
-import org.foxtrot.hermetrics.canonical.CanonicalArray;
-import org.foxtrot.hermetrics.canonical.CanonicalNull;
-import org.foxtrot.hermetrics.canonical.CanonicalObject;
-import org.foxtrot.hermetrics.canonical.CanonicalValue;
-import org.foxtrot.hermetrics.canonical.Path;
+import org.foxtrot.hermetrics.canonical.value.CanonicalArray;
+import org.foxtrot.hermetrics.canonical.value.CanonicalNull;
+import org.foxtrot.hermetrics.canonical.value.CanonicalObject;
+import org.foxtrot.hermetrics.canonical.value.CanonicalValue;
+import org.foxtrot.hermetrics.canonical.path.Path;
 
 import java.util.ArrayList;
 import java.util.List;

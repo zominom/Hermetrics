@@ -112,20 +112,23 @@ Then deploy the release candidate to load: new signatures are the release's diff
 Everything that can vary sits behind an interface, assembled in one composition
 root: `Plugins` (flink package). Implement `Plugins` — or start from
 `Plugins.defaults()` — and pass it to `HermetricsJob.build` to swap parts
-without touching core:
+without touching core. Every extension axis follows the same shape — SPI + DTOs
+at the package root, implementations in a subpackage — so adding one is "drop a
+file in the obvious place and register it in `Plugins`":
 
-- **Payload formats** — `PayloadDecoder`, registered in `DecoderRegistry`.
-- **Rule types** — `TreeRewriteRule` / `EquivalenceRule` via a `RuleFactory`,
-  registered in `RuleTypeRegistry` (rule paths support `a.b`, `items[]`,
-  `items[2]`, `*`, `**`, and `\.` escapes).
-- **Diff algorithm** — `Differ` (`StructuralDiffer` compares arrays positionally).
-- **Results format** — `FindingCodec` (`JsonFindingCodec` emits the verdict,
-  rollup, and dead-letter JSON).
-- **Sinks** — `FindingSinkFactory`, registered in `SinkRegistry`
+- **Payload formats** — `PayloadDecoder` + `DecoderRegistry`; impls in `decode/format`.
+- **Rule types** — `TreeRewriteRule` / `EquivalenceRule` via a `RuleFactory` +
+  `RuleTypeRegistry`; impls in `rules/builtin` (rule paths support `a.b`,
+  `items[]`, `items[2]`, `*`, `**`, and `\.` escapes).
+- **Diff algorithm** — `Differ`; impls in `diff/algorithm` (`StructuralDiffer`
+  compares arrays positionally).
+- **Results format** — `FindingCodec`; impls in `report/codec` (`JsonFindingCodec`
+  emits the verdict, rollup, and dead-letter JSON).
+- **Sinks** — `FindingSinkFactory` + `SinkRegistry`; impls in `flink/sink`
   (`kafka` and `logging` ship built in).
 
-The comparison core (`canonical`, `decode`, `rules`, `diff`, `match`,
-`pipeline`, `config`, `report` packages) has no Flink dependency and is fully
-unit-testable; the `flink` package and its `config`/`operator`/`sink`
-subpackages only wire sources, keyed state, timers, broadcast config, and sinks
-around it.
+The comparison core (`canonical.*`, `decode.*`, `rules.*`, `diff.*`, `match.*`,
+`pipeline`, `config`, `report.*` packages) has no Flink dependency and is fully
+unit-testable; the `flink` package and its `source`/`record`/`config`/`operator`/
+`sink` subpackages only wire sources, keyed state, timers, broadcast config, and
+sinks around it.

@@ -1,7 +1,7 @@
 package org.foxtrot.hermetrics.pipeline;
 
-import org.foxtrot.hermetrics.canonical.CanonicalValue;
-import org.foxtrot.hermetrics.canonical.Path;
+import org.foxtrot.hermetrics.canonical.value.CanonicalValue;
+import org.foxtrot.hermetrics.canonical.path.Path;
 import org.foxtrot.hermetrics.config.CompareConfig;
 import org.foxtrot.hermetrics.config.TopicConfig;
 import org.foxtrot.hermetrics.decode.DecodeException;

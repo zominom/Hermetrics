@@ -1,6 +1,6 @@
 package org.foxtrot.hermetrics.decode;
 
-import org.foxtrot.hermetrics.canonical.CanonicalValue;
+import org.foxtrot.hermetrics.canonical.value.CanonicalValue;
 
 public interface PayloadDecoder {
 

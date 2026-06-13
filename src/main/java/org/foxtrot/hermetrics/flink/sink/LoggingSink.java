@@ -3,7 +3,7 @@ package org.foxtrot.hermetrics.flink.sink;
 import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.api.connector.sink2.SinkWriter;
 import org.apache.flink.api.connector.sink2.WriterInitContext;
-import org.foxtrot.hermetrics.flink.KeyedRecord;
+import org.foxtrot.hermetrics.flink.record.KeyedRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

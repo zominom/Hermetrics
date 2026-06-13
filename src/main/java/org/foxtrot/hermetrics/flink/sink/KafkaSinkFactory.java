@@ -5,7 +5,7 @@ import org.apache.flink.api.connector.sink2.Sink;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
-import org.foxtrot.hermetrics.flink.KeyedRecord;
+import org.foxtrot.hermetrics.flink.record.KeyedRecord;
 import org.foxtrot.hermetrics.flink.config.SinkConfig;
 
 import java.nio.charset.StandardCharsets;

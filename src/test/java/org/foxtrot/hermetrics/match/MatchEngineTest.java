@@ -1,6 +1,11 @@
 package org.foxtrot.hermetrics.match;
 
-import org.foxtrot.hermetrics.diff.StructuralDiffer;
+import org.foxtrot.hermetrics.match.state.GuidState;
+import org.foxtrot.hermetrics.match.verdict.Severity;
+import org.foxtrot.hermetrics.match.verdict.Verdict;
+import org.foxtrot.hermetrics.match.verdict.VerdictStatus;
+
+import org.foxtrot.hermetrics.diff.algorithm.StructuralDiffer;
 import org.foxtrot.hermetrics.rules.RuleSet;
 import org.junit.jupiter.api.Test;
 

@@ -1,10 +1,10 @@
 package org.foxtrot.hermetrics.rules;
 
-import org.foxtrot.hermetrics.canonical.CanonicalJsonWriter;
-import org.foxtrot.hermetrics.canonical.CanonicalNull;
-import org.foxtrot.hermetrics.canonical.CanonicalValue;
-import org.foxtrot.hermetrics.canonical.ContentHasher;
-import org.foxtrot.hermetrics.canonical.PathPattern;
+import org.foxtrot.hermetrics.canonical.json.CanonicalJsonWriter;
+import org.foxtrot.hermetrics.canonical.value.CanonicalNull;
+import org.foxtrot.hermetrics.canonical.value.CanonicalValue;
+import org.foxtrot.hermetrics.canonical.json.ContentHasher;
+import org.foxtrot.hermetrics.canonical.path.PathPattern;
 import org.foxtrot.hermetrics.rules.builtin.IgnoreRule;
 import org.foxtrot.hermetrics.rules.builtin.MaskRule;
 import org.foxtrot.hermetrics.rules.builtin.UnorderedRule;

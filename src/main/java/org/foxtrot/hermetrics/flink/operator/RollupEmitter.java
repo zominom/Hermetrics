@@ -3,7 +3,7 @@ package org.foxtrot.hermetrics.flink.operator;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
-import org.foxtrot.hermetrics.flink.KeyedRecord;
+import org.foxtrot.hermetrics.flink.record.KeyedRecord;
 import org.foxtrot.hermetrics.report.FindingCodec;
 import org.foxtrot.hermetrics.report.Rollup;
 

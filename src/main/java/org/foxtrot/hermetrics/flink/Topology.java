@@ -1,5 +1,9 @@
 package org.foxtrot.hermetrics.flink;
 
+import org.foxtrot.hermetrics.flink.record.KeyedRecord;
+import org.foxtrot.hermetrics.flink.record.RawEnvRecord;
+import org.foxtrot.hermetrics.flink.record.VerdictSummary;
+
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStream;

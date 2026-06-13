@@ -2,10 +2,10 @@ package org.foxtrot.hermetrics.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.foxtrot.hermetrics.canonical.Path;
+import org.foxtrot.hermetrics.canonical.path.Path;
 import org.foxtrot.hermetrics.match.MatchPolicy;
 import org.foxtrot.hermetrics.rules.RuleSet;
-import org.foxtrot.hermetrics.rules.RuleSetLoader;
+import org.foxtrot.hermetrics.rules.loader.RuleSetLoader;
 
 import java.io.IOException;
 import java.util.ArrayList;

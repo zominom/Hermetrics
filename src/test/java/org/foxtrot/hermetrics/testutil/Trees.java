@@ -1,7 +1,7 @@
 package org.foxtrot.hermetrics.testutil;
 
-import org.foxtrot.hermetrics.canonical.CanonicalValue;
-import org.foxtrot.hermetrics.decode.JsonPayloadDecoder;
+import org.foxtrot.hermetrics.canonical.value.CanonicalValue;
+import org.foxtrot.hermetrics.decode.format.JsonPayloadDecoder;
 import org.foxtrot.hermetrics.decode.RawMessage;
 
 /** Builds canonical trees from JSON literals — keeps test fixtures readable. */

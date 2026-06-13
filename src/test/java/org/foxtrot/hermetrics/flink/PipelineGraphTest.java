@@ -1,5 +1,7 @@
 package org.foxtrot.hermetrics.flink;
 
+import org.foxtrot.hermetrics.flink.record.RawEnvRecord;
+
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.foxtrot.hermetrics.config.ConfigLoader;
