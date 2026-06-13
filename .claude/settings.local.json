@@ -32,7 +32,13 @@
       "Bash(awk '{print $5, $NF}')",
       "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" -f pom.xml test)",
       "Bash(git add *)",
-      "Bash(awk '{print $1}')"
+      "Bash(awk '{print $1}')",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(/tmp/helm lint *)",
+      "Bash(/tmp/helm template *)",
+      "Bash(awk '/name: hm-jobmanager$/,/strategy:|^---/')",
+      "Bash(python3 -c \"import sys,yaml; docs=list\\(yaml.safe_load_all\\(sys.stdin\\)\\); print\\(f'{len\\([d for d in docs if d]\\)} valid YAML docs'\\)\")"
     ]
   }
 }

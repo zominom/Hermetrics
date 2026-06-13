@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hermetrics.fullname" . }}-taskmanager
+  labels:
+    {{- include "hermetrics.labels" . | nindent 4 }}
+    app.kubernetes.io/component: taskmanager
+spec:
+  replicas: {{ .Values.flink.taskmanager.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "hermetrics.fullname" . }}
+      app.kubernetes.io/component: taskmanager
+  template:
+    metadata:
+      labels:
+        {{- include "hermetrics.labels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "hermetrics.fullname" . }}
+        app.kubernetes.io/component: taskmanager
+    spec:
+      {{- include "hermetrics.imagePullSecrets" . | nindent 6 }}
+      securityContext:
+        {{- include "hermetrics.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: taskmanager
+          image: "{{ .Values.image.registry }}{{ .Values.image.flink.repository }}:{{ .Values.image.flink.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - taskmanager
+          env:
+            - name: FLINK_PROPERTIES
+              value: |-
+                jobmanager.rpc.address: {{ include "hermetrics.fullname" . }}-jobmanager
+{{ .Values.flink.properties | indent 16 }}
+          resources:
+            {{- toYaml .Values.flink.resources.taskmanager | nindent 12 }}
+          securityContext:
+            {{- include "hermetrics.containerSecurityContext" . | nindent 12 }}

@@ -1,0 +1,97 @@
+{{- if .Values.expose.enabled }}
+{{- if eq .Values.platform "openshift" }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "hermetrics.fullname" . }}-ui
+  labels:
+    {{- include "hermetrics.labels" . | nindent 4 }}
+spec:
+  host: {{ .Values.expose.host }}
+  to:
+    kind: Service
+    name: {{ include "hermetrics.fullname" . }}-ui
+    weight: 100
+  port:
+    targetPort: http
+  {{- if .Values.expose.tls }}
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  {{- end }}
+{{- else }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "hermetrics.fullname" . }}-ui
+  labels:
+    {{- include "hermetrics.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.expose.ingressClassName }}
+  ingressClassName: {{ .Values.expose.ingressClassName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.expose.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "hermetrics.fullname" . }}-ui
+                port:
+                  name: http
+  {{- if .Values.expose.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.expose.host | quote }}
+      secretName: {{ include "hermetrics.fullname" . }}-ui-tls
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- if .Values.flink.exposeUi.enabled }}
+---
+{{- if eq .Values.platform "openshift" }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "hermetrics.fullname" . }}-flink-ui
+  labels:
+    {{- include "hermetrics.labels" . | nindent 4 }}
+spec:
+  host: {{ .Values.flink.exposeUi.host }}
+  to:
+    kind: Service
+    name: {{ include "hermetrics.fullname" . }}-jobmanager
+    weight: 100
+  port:
+    targetPort: ui
+  {{- if .Values.expose.tls }}
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  {{- end }}
+{{- else }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "hermetrics.fullname" . }}-flink-ui
+  labels:
+    {{- include "hermetrics.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.expose.ingressClassName }}
+  ingressClassName: {{ .Values.expose.ingressClassName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.flink.exposeUi.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "hermetrics.fullname" . }}-jobmanager
+                port:
+                  name: ui
+{{- end }}
+{{- end }}

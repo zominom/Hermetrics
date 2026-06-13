@@ -1,0 +1,6 @@
+apiVersion: v2
+name: hermetrics
+description: Kafka shadow-pipeline parity checker (Flink job + control-plane API + UI)
+type: application
+version: 1.0.0
+appVersion: "1.0-SNAPSHOT"

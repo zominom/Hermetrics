@@ -1,0 +1,29 @@
+hermetrics is deployed ({{ .Values.platform }}).
+
+  Flink JobManager (Application Mode) + {{ .Values.flink.taskmanager.replicas }} TaskManager(s)
+  Control-plane API : {{ include "hermetrics.fullname" . }}-api:8080
+  UI                : {{ include "hermetrics.fullname" . }}-ui:8080
+
+UI:
+{{- if .Values.expose.enabled }}
+  http{{ if .Values.expose.tls }}s{{ end }}://{{ .Values.expose.host }}
+{{- else }}
+  kubectl port-forward svc/{{ include "hermetrics.fullname" . }}-ui 5173:8080   # then http://localhost:5173
+{{- end }}
+
+Flink dashboard:
+{{- if .Values.flink.exposeUi.enabled }}
+  http{{ if .Values.expose.tls }}s{{ end }}://{{ .Values.flink.exposeUi.host }}
+{{- else }}
+  kubectl port-forward svc/{{ include "hermetrics.fullname" . }}-jobmanager 8081:8081
+{{- end }}
+
+Config changes apply live from the UI's Config tab (publishes to the control
+topic; the running job hot-swaps with no restart). The job/api configs were
+rendered into Secrets {{ include "hermetrics.fullname" . }}-{job,api}-config.
+{{ if eq .Values.platform "openshift" }}
+OpenShift: if the Flink pods crash on filesystem permissions, the Flink image
+needs to tolerate an arbitrary uid (chmod -R g+rwX /opt/flink at build) or grant
+its service account anyuid:
+  oc adm policy add-scc-to-user anyuid -z default -n <namespace>
+{{- end }}

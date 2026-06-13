@@ -10,6 +10,8 @@ target/
 job-config*.json
 api-config*.json
 ui/
+deploy/
 Dockerfile
+Dockerfile.api
 .dockerignore
 docker-compose*.yml

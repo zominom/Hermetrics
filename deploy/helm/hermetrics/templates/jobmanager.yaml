@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hermetrics.fullname" . }}-jobmanager
+  labels:
+    {{- include "hermetrics.labels" . | nindent 4 }}
+    app.kubernetes.io/component: jobmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "hermetrics.fullname" . }}
+      app.kubernetes.io/component: jobmanager
+  template:
+    metadata:
+      labels:
+        {{- include "hermetrics.labels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "hermetrics.fullname" . }}
+        app.kubernetes.io/component: jobmanager
+    spec:
+      {{- include "hermetrics.imagePullSecrets" . | nindent 6 }}
+      securityContext:
+        {{- include "hermetrics.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: jobmanager
+          image: "{{ .Values.image.registry }}{{ .Values.image.flink.repository }}:{{ .Values.image.flink.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - standalone-job
+            - --job-classname
+            - {{ .Values.flink.jobClassName }}
+            - {{ .Values.flink.configMountDir }}/job-config.json
+          ports:
+            - { name: rpc, containerPort: 6123 }
+            - { name: blob, containerPort: 6124 }
+            - { name: ui, containerPort: 8081 }
+          env:
+            - name: FLINK_PROPERTIES
+              value: |-
+                jobmanager.rpc.address: {{ include "hermetrics.fullname" . }}-jobmanager
+                blob.server.port: 6124
+{{ .Values.flink.properties | indent 16 }}
+          volumeMounts:
+            - name: job-config
+              mountPath: {{ .Values.flink.configMountDir }}
+              readOnly: true
+          resources:
+            {{- toYaml .Values.flink.resources.jobmanager | nindent 12 }}
+          securityContext:
+            {{- include "hermetrics.containerSecurityContext" . | nindent 12 }}
+      volumes:
+        - name: job-config
+          secret:
+            secretName: {{ include "hermetrics.fullname" . }}-job-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hermetrics.fullname" . }}-jobmanager
+  labels:
+    {{- include "hermetrics.labels" . | nindent 4 }}
+    app.kubernetes.io/component: jobmanager
+spec:
+  selector:
+    app.kubernetes.io/name: {{ include "hermetrics.fullname" . }}
+    app.kubernetes.io/component: jobmanager
+  ports:
+    - { name: rpc, port: 6123 }
+    - { name: blob, port: 6124 }
+    - { name: ui, port: 8081 }

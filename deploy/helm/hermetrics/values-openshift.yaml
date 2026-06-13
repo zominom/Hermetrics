@@ -1,0 +1,9 @@
+platform: openshift
+
+# OpenShift assigns a random non-root uid in group 0. The API and UI images are
+# built for that. The Flink image must also tolerate an arbitrary uid — either
+# build it group-0-writable (chmod -R g+rwX /opt/flink) or grant the Flink
+# service account the anyuid SCC (see deploy docs).
+
+expose:
+  tls: true

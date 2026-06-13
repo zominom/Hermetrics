@@ -1,0 +1,88 @@
+nameOverride: ""
+
+platform: kubernetes
+
+image:
+  registry: ""
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+  flink:
+    repository: hermetrics-flink
+    tag: latest
+  api:
+    repository: hermetrics-api
+    tag: latest
+  ui:
+    repository: hermetrics-ui
+    tag: latest
+
+flink:
+  jobClassName: org.foxtrot.hermetrics.flink.job.HermetricsJob
+  configMountDir: /opt/hermetrics
+  taskmanager:
+    replicas: 2
+  properties: |
+    taskmanager.numberOfTaskSlots: 2
+    state.backend: rocksdb
+  resources:
+    jobmanager:
+      requests: { cpu: "500m", memory: 1Gi }
+      limits: { memory: 2Gi }
+    taskmanager:
+      requests: { cpu: "1", memory: 2Gi }
+      limits: { memory: 4Gi }
+  exposeUi:
+    enabled: false
+    host: flink.hermetrics.example.com
+
+api:
+  replicas: 1
+  configMountDir: /etc/hermetrics
+  resources:
+    requests: { cpu: "100m", memory: 256Mi }
+    limits: { memory: 512Mi }
+
+ui:
+  replicas: 1
+  resources:
+    requests: { cpu: "50m", memory: 64Mi }
+    limits: { memory: 128Mi }
+
+expose:
+  enabled: true
+  host: hermetrics.example.com
+  ingressClassName: ""
+  tls: false
+
+# The Flink job configuration (clusters, sinks, compare section). Rendered into a
+# Secret because it may embed Kafka SASL credentials. Replace with your pipeline.
+jobConfig: |
+  {
+    "main": {"clusters": [{"name": "core", "bootstrapServers": "main-kafka:9092", "topics": ["pipeline.input"]}]},
+    "load": {"clusters": [{"name": "core", "bootstrapServers": "load-kafka:9092", "topics": ["pipeline.input"]}]},
+    "control": {"bootstrapServers": "load-kafka:9092", "topic": "hermetrics.control"},
+    "results": {"type": "kafka", "options": {"bootstrapServers": "load-kafka:9092", "topic": "hermetrics.verdicts"}},
+    "rollups": {"windowMillis": 60000, "sink": {"type": "kafka", "options": {"bootstrapServers": "load-kafka:9092", "topic": "hermetrics.rollups"}}},
+    "deadLetters": {"type": "kafka", "options": {"bootstrapServers": "load-kafka:9092", "topic": "hermetrics.dead-letters"}},
+    "stateTtlMillis": 1800000,
+    "checkpointIntervalMillis": 60000,
+    "compare": {
+      "policy": {"quietMillis": 300000, "maxWaitMillis": 3600000, "cohortMode": "ENTRY_TOPICS"},
+      "ruleSets": {"default": {"rules": [{"type": "ignore", "path": "**.traceId"}]}},
+      "topics": [{"name": "pipeline.input", "role": "BOTH", "format": "json", "guidPath": "documentGuid"}]
+    }
+  }
+
+# The control-plane API configuration. Rendered into a Secret (may embed SASL creds).
+apiConfig: |
+  {
+    "port": 8080,
+    "bootstrapServers": "load-kafka:9092",
+    "controlTopic": "hermetrics.control",
+    "resultsTopic": "hermetrics.verdicts",
+    "rollupsTopic": "hermetrics.rollups",
+    "deadLetterTopic": "hermetrics.dead-letters",
+    "flinkUiUrl": "",
+    "tailSize": 500,
+    "findingsOffsetReset": "latest"
+  }

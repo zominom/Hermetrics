@@ -132,6 +132,16 @@ bootstrap compare config to show before the control topic has a message).
 Endpoints: `GET /api/rule-types`, `GET|POST /api/config/{active,validate,apply}`,
 `GET /api/{verdicts,rollups,dead-letters,summary}`.
 
+## Deploy to Kubernetes / OpenShift
+
+All three images (Flink job, API, UI) run via the Helm chart in
+`deploy/helm/hermetrics` — JobManager (Application Mode) + TaskManagers, the API,
+and the UI, with the UI exposed by Ingress (k8s) or Route (OpenShift) from a
+single `platform` value. Build with `Dockerfile` (job), `Dockerfile.api`, and
+`ui/Dockerfile` (OpenShift-SCC-safe: non-root, group-0-readable). See
+[deploy/README.md](deploy/README.md) for the full build + `helm install` steps
+and the OpenShift SCC note for the Flink image.
+
 ## Extension points
 
 Everything that can vary sits behind an interface, assembled in one composition
