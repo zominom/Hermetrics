@@ -4,13 +4,19 @@ import java.io.Serializable;
 
 public record VerdictStats(long mainMessages, long loadMessages,
                            int mainDistinctStates, int loadDistinctStates,
-                           long mainDuplicates, long loadDuplicates) implements Serializable {
+                           long mainDuplicates, long loadDuplicates,
+                           int missingSequencesInLoad, int extraSequencesInLoad) implements Serializable {
 
     public static VerdictStats of(TopicPair pair) {
+        return of(pair, 0, 0);
+    }
+
+    public static VerdictStats of(TopicPair pair, int missingSequencesInLoad, int extraSequencesInLoad) {
         return new VerdictStats(
                 pair.main.messageCount, pair.load.messageCount,
-                pair.main.distinctHashes.size(), pair.load.distinctHashes.size(),
-                pair.main.duplicateCount, pair.load.duplicateCount);
+                pair.main.distinctStates(), pair.load.distinctStates(),
+                pair.main.duplicateCount, pair.load.duplicateCount,
+                missingSequencesInLoad, extraSequencesInLoad);
     }
 
     public static VerdictStats aggregate(GuidState state) {
@@ -23,12 +29,12 @@ public record VerdictStats(long mainMessages, long loadMessages,
         for (TopicPair pair : state.topics.values()) {
             mainMessages += pair.main.messageCount;
             loadMessages += pair.load.messageCount;
-            mainDistinct += pair.main.distinctHashes.size();
-            loadDistinct += pair.load.distinctHashes.size();
+            mainDistinct += pair.main.distinctStates();
+            loadDistinct += pair.load.distinctStates();
             mainDuplicates += pair.main.duplicateCount;
             loadDuplicates += pair.load.duplicateCount;
         }
         return new VerdictStats(mainMessages, loadMessages, mainDistinct, loadDistinct,
-                mainDuplicates, loadDuplicates);
+                mainDuplicates, loadDuplicates, 0, 0);
     }
 }

@@ -19,11 +19,21 @@
     ]
   },
   "load": {
-    "bootstrapServers": "load-kafka:9092",
-    "groupId": "hermetrics-load",
-    "topicPrefix": "",
-    "topicOverrides": {},
-    "startingOffsets": "latest"
+    "clusters": [
+      {
+        "name": "ingest",
+        "bootstrapServers": "load-ingest-kafka:9092",
+        "topics": ["pipeline.input"],
+        "topicPrefix": "load."
+      },
+      {
+        "name": "core",
+        "bootstrapServers": "load-core-kafka:9092",
+        "topics": ["orders.enriched", "legacy.export"],
+        "topicPrefix": "load.",
+        "topicOverrides": {"legacy.export": "legacy-export-load"}
+      }
+    ]
   },
   "control": {
     "bootstrapServers": "load-kafka:9092",
@@ -51,7 +61,7 @@
   },
   "stateTtlMillis": 7200000,
   "checkpointIntervalMillis": 60000,
-  "emitEqualVerdicts": true,
+  "emitEqualVerdicts": false,
   "compare": {
     "policy": {
       "quietMillis": 300000,
@@ -80,7 +90,7 @@
     },
     "topics": [
       {"name": "pipeline.input", "role": "BOTH", "format": "json", "guidPath": "documentGuid"},
-      {"name": "orders.enriched", "role": "OUTPUT", "format": "json", "guidPath": "doc.guid", "ruleSet": "orders"},
+      {"name": "orders.enriched", "role": "OUTPUT", "format": "json", "guidPath": "doc.guid", "sequencePath": "doc.version", "ruleSet": "orders"},
       {"name": "legacy.export", "role": "OUTPUT", "format": "xml", "guidPath": "export.@guid"}
     ]
   }

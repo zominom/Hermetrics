@@ -14,11 +14,17 @@ environmental noise, duplicate deliveries, upsert churn, and injected test data.
 2. **Canonical normalization** — each payload is decoded (JSON, XML, pluggable)
    into one canonical tree and rewritten by per-topic rules: ignore noise fields,
    mask PII, sort order-insensitive arrays, with `null` ≡ absent by default.
-3. **State comparison, not message comparison** — per (topic, GUID), messages fold
-   into a timeline of distinct states. Exact re-sends count as duplicates and do
-   not move the final state. The verdict compares **final states** (with numeric/
-   time tolerances), and flags `EQUAL_DIVERGED` when finals match but the
-   intermediate paths differed (e.g. coalesced updates).
+3. **Message-level parity for updates** — per (topic, GUID), messages fold into a
+   timeline of distinct states. Topics with a `sequencePath` (one field or a
+   combination identifying each message) get the strict contract: every main
+   message is paired with the load message carrying the same sequence and the
+   pair is diffed — `EQUAL` only when every pair matches. The **final state** is
+   the highest sequence (numeric-aware, event time as tiebreak), so a stale
+   re-send never masquerades as the latest update. When finals match but pairs
+   differ or are missing, the verdict is `EQUAL_DIVERGED` carrying the pair
+   diffs and missing/extra sequence counts. Topics without a sequence fall back
+   to content-hash semantics: re-sends count as duplicates, finals are
+   last-by-arrival, and differing intermediate state sets flag `EQUAL_DIVERGED`.
 4. **Signature aggregation** — every diff reduces to its shape (generalized paths +
    change kinds), so 40k documents differing the same way roll up into one finding
    with counts and sample GUIDs.

@@ -8,7 +8,9 @@ import org.foxtrot.hermetrics.rules.RuleSet;
 import org.foxtrot.hermetrics.rules.RuleSetLoader;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -82,7 +84,23 @@ public final class ConfigLoader {
                 TopicConfig.Role.valueOf(node.path("role").asText("OUTPUT").toUpperCase(Locale.ROOT)),
                 required(node, "format").asText(),
                 Path.parse(required(node, "guidPath").asText()),
+                sequencePaths(node.get("sequencePath")),
                 ruleSet);
+    }
+
+    private static List<Path> sequencePaths(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return List.of();
+        }
+        if (node.isTextual()) {
+            return List.of(Path.parse(node.asText()));
+        }
+        List<Path> paths = new ArrayList<>();
+        node.forEach(path -> paths.add(Path.parse(path.asText())));
+        if (paths.isEmpty()) {
+            throw new IllegalArgumentException("sequencePath must be a path or a non-empty array of paths");
+        }
+        return paths;
     }
 
     private static JsonNode required(JsonNode node, String field) {

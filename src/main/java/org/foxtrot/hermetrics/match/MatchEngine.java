@@ -1,14 +1,15 @@
 package org.foxtrot.hermetrics.match;
 
 import org.foxtrot.hermetrics.canonical.CanonicalJsonReader;
+import org.foxtrot.hermetrics.canonical.CanonicalValue;
 import org.foxtrot.hermetrics.diff.Differ;
 import org.foxtrot.hermetrics.diff.DiffSignature;
 import org.foxtrot.hermetrics.diff.FieldDiff;
 import org.foxtrot.hermetrics.rules.RuleSet;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.function.Function;
 
 public final class MatchEngine {
@@ -37,7 +38,8 @@ public final class MatchEngine {
         }
         state.topics.computeIfAbsent(observation.topic(), topic -> new TopicPair())
                 .timeline(observation.env())
-                .observe(observation.stateHash(), observation.stateJson());
+                .observe(observation.sequence(), observation.stateHash(),
+                        observation.stateJson(), observation.eventTimeMillis());
     }
 
     public long nextDecisionTime(GuidState state) {
@@ -86,41 +88,98 @@ public final class MatchEngine {
     }
 
     private Verdict judgeTopic(String guid, String topic, TopicPair pair, long nowMillis) {
-        Timeline main = pair.main;
-        Timeline load = pair.load;
-        if (main.isEmpty() && load.isEmpty()) {
+        if (pair.main.isEmpty() && pair.load.isEmpty()) {
             return null;
         }
         int revision = ++pair.revision;
-        VerdictStats stats = VerdictStats.of(pair);
-        if (load.isEmpty()) {
+        if (pair.load.isEmpty()) {
             return new Verdict(guid, topic, VerdictStatus.MISSING_IN_LOAD, Severity.ERROR,
-                    null, List.of(), stats, revision, nowMillis);
+                    null, List.of(), VerdictStats.of(pair), revision, nowMillis);
         }
-        if (main.isEmpty()) {
+        if (pair.main.isEmpty()) {
             return new Verdict(guid, topic, VerdictStatus.EXTRA_IN_LOAD, Severity.WARN,
-                    null, List.of(), stats, revision, nowMillis);
+                    null, List.of(), VerdictStats.of(pair), revision, nowMillis);
         }
-        return compareFinalStates(guid, topic, pair, stats, revision, nowMillis);
+        return compareStates(guid, topic, pair, revision, nowMillis);
     }
 
-    private Verdict compareFinalStates(String guid, String topic, TopicPair pair,
-                                       VerdictStats stats, int revision, long nowMillis) {
-        List<FieldDiff> diffs = differ.diff(
-                CanonicalJsonReader.parse(pair.main.lastStateJson),
-                CanonicalJsonReader.parse(pair.load.lastStateJson),
-                ruleSetFor(topic));
-        if (!diffs.isEmpty()) {
+    private Verdict compareStates(String guid, String topic, TopicPair pair, int revision, long nowMillis) {
+        RuleSet rules = ruleSetFor(topic);
+        List<FieldDiff> finalDiffs = differ.diff(
+                parse(pair.main.finalVersion().stateJson),
+                parse(pair.load.finalVersion().stateJson),
+                rules);
+        if (!finalDiffs.isEmpty()) {
             return new Verdict(guid, topic, VerdictStatus.DIFF, Severity.ERROR,
-                    DiffSignature.of(diffs), diffs, stats, revision, nowMillis);
+                    DiffSignature.of(finalDiffs), finalDiffs, VerdictStats.of(pair), revision, nowMillis);
         }
-        if (sameDistinctStates(pair)) {
+        if (pair.main.sequenced() || pair.load.sequenced()) {
+            return judgeSequencedPath(guid, topic, pair, rules, revision, nowMillis);
+        }
+        return judgeUnsequencedPath(guid, topic, pair, revision, nowMillis);
+    }
+
+    private Verdict judgeUnsequencedPath(String guid, String topic, TopicPair pair, int revision, long nowMillis) {
+        if (pair.main.hashes().equals(pair.load.hashes())) {
+            return new Verdict(guid, topic, VerdictStatus.EQUAL, Severity.OK,
+                    null, List.of(), VerdictStats.of(pair), revision, nowMillis);
+        }
+        return new Verdict(guid, topic, VerdictStatus.EQUAL_DIVERGED, divergedSeverity(),
+                null, List.of(), VerdictStats.of(pair), revision, nowMillis);
+    }
+
+    private Verdict judgeSequencedPath(String guid, String topic, TopicPair pair, RuleSet rules,
+                                       int revision, long nowMillis) {
+        List<FieldDiff> pairDiffs = new ArrayList<>();
+        int missingInLoad = 0;
+        int extraInLoad = 0;
+        boolean everyMessageEqual = true;
+
+        for (String sequence : allSequences(pair)) {
+            StateVersion main = pair.main.bySequence(sequence);
+            StateVersion load = pair.load.bySequence(sequence);
+            if (main == null) {
+                extraInLoad++;
+                everyMessageEqual = false;
+            } else if (load == null) {
+                missingInLoad++;
+                everyMessageEqual = false;
+            } else if (!main.hash.equals(load.hash)) {
+                List<FieldDiff> diffs = differ.diff(parse(main.stateJson), parse(load.stateJson), rules);
+                if (!diffs.isEmpty()) {
+                    everyMessageEqual = false;
+                    pairDiffs.addAll(diffs);
+                }
+            }
+        }
+
+        VerdictStats stats = VerdictStats.of(pair, missingInLoad, extraInLoad);
+        if (everyMessageEqual) {
             return new Verdict(guid, topic, VerdictStatus.EQUAL, Severity.OK,
                     null, List.of(), stats, revision, nowMillis);
         }
-        Severity severity = policy.strictIntermediates() ? Severity.WARN : Severity.INFO;
-        return new Verdict(guid, topic, VerdictStatus.EQUAL_DIVERGED, severity,
-                null, List.of(), stats, revision, nowMillis);
+        DiffSignature signature = pairDiffs.isEmpty() ? null : DiffSignature.of(pairDiffs);
+        return new Verdict(guid, topic, VerdictStatus.EQUAL_DIVERGED, divergedSeverity(),
+                signature, pairDiffs, stats, revision, nowMillis);
+    }
+
+    private static TreeSet<String> allSequences(TopicPair pair) {
+        TreeSet<String> sequences = new TreeSet<>(Timeline::compareSequences);
+        for (StateVersion version : pair.main.versions) {
+            if (version.sequence != null) {
+                sequences.add(version.sequence);
+            }
+        }
+        for (StateVersion version : pair.load.versions) {
+            if (version.sequence != null) {
+                sequences.add(version.sequence);
+            }
+        }
+        return sequences;
+    }
+
+    private Severity divergedSeverity() {
+        return policy.strictIntermediates() ? Severity.WARN : Severity.INFO;
     }
 
     private RuleSet ruleSetFor(String topic) {
@@ -128,8 +187,8 @@ public final class MatchEngine {
         return rules == null ? RuleSet.EMPTY : rules;
     }
 
-    private static boolean sameDistinctStates(TopicPair pair) {
-        return new HashSet<>(pair.main.distinctHashes).equals(new HashSet<>(pair.load.distinctHashes));
+    private static CanonicalValue parse(String stateJson) {
+        return CanonicalJsonReader.parse(stateJson);
     }
 
     private List<Verdict> unanchoredVerdicts(String guid, GuidState state, long nowMillis) {

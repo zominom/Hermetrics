@@ -31,7 +31,7 @@ class JsonFindingCodecTest {
         List<FieldDiff> diffs = List.of(
                 new FieldDiff(Path.parse("total"), FieldDiff.Kind.VALUE_CHANGED, "10", "12"));
         Verdict verdict = new Verdict("g1", "orders", VerdictStatus.DIFF, Severity.ERROR,
-                DiffSignature.of(diffs), diffs, new VerdictStats(2, 1, 2, 1, 0, 0), 3, 42L);
+                DiffSignature.of(diffs), diffs, new VerdictStats(2, 1, 2, 1, 0, 0, 1, 0), 3, 42L);
 
         JsonNode node = parse(codec.verdict(verdict));
         assertThat(node.get("type").asText()).isEqualTo("verdict");
@@ -49,12 +49,13 @@ class JsonFindingCodecTest {
         assertThat(diff.get("main").asText()).isEqualTo("10");
         assertThat(diff.get("load").asText()).isEqualTo("12");
         assertThat(node.get("stats").get("mainMessages").asLong()).isEqualTo(2);
+        assertThat(node.get("stats").get("missingSequencesInLoad").asInt()).isEqualTo(1);
     }
 
     @Test
     void equalVerdictStaysLean() throws Exception {
         Verdict verdict = new Verdict("g1", "orders", VerdictStatus.EQUAL, Severity.OK,
-                null, List.of(), new VerdictStats(1, 1, 1, 1, 0, 0), 1, 42L);
+                null, List.of(), new VerdictStats(1, 1, 1, 1, 0, 0, 0, 0), 1, 42L);
         JsonNode node = parse(codec.verdict(verdict));
         assertThat(node.has("signatureId")).isFalse();
         assertThat(node.has("signature")).isFalse();
@@ -67,7 +68,7 @@ class JsonFindingCodecTest {
         List<FieldDiff> diffs = List.of(
                 new FieldDiff(Path.parse("blob"), FieldDiff.Kind.VALUE_CHANGED, huge, "small"));
         Verdict verdict = new Verdict("g1", "orders", VerdictStatus.DIFF, Severity.ERROR,
-                DiffSignature.of(diffs), diffs, new VerdictStats(1, 1, 1, 1, 0, 0), 1, 42L);
+                DiffSignature.of(diffs), diffs, new VerdictStats(1, 1, 1, 1, 0, 0, 0, 0), 1, 42L);
         String main = parse(codec.verdict(verdict)).get("diffs").get(0).get("main").asText();
         assertThat(main).endsWith("…(truncated)");
         assertThat(main.length()).isLessThan(2100);

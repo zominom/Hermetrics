@@ -1,6 +1,7 @@
 package org.foxtrot.hermetrics.pipeline;
 
 import org.foxtrot.hermetrics.canonical.CanonicalValue;
+import org.foxtrot.hermetrics.canonical.Path;
 import org.foxtrot.hermetrics.config.CompareConfig;
 import org.foxtrot.hermetrics.config.TopicConfig;
 import org.foxtrot.hermetrics.decode.DecodeException;
@@ -12,6 +13,7 @@ import org.foxtrot.hermetrics.rules.Normalizer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 public final class ObservationFactory {
 
@@ -31,22 +33,35 @@ public final class ObservationFactory {
             return List.of();
         }
         CanonicalValue decoded = decoders.forFormat(topic.format()).decode(message);
-        String guid = extractGuid(message, topic, decoded);
+        String guid = extractRequired(message, topic.guidPath(), decoded, "GUID");
 
         List<Observation> observations = new ArrayList<>(2);
         if (topic.role() != TopicConfig.Role.OUTPUT) {
             observations.add(Observation.entry(env, message.topic(), guid, message.timestampMillis()));
         }
         if (topic.role() != TopicConfig.Role.ENTRY) {
+            String sequence = extractSequence(message, topic, decoded);
             CanonicalValue normalized = normalizer.normalize(decoded, config.ruleSetFor(message.topic()));
-            observations.add(Observation.output(env, message.topic(), guid, normalized, message.timestampMillis()));
+            observations.add(Observation.output(env, message.topic(), guid, sequence,
+                    normalized, message.timestampMillis()));
         }
         return observations;
     }
 
-    private static String extractGuid(RawMessage message, TopicConfig topic, CanonicalValue decoded) {
-        return GuidExtractor.extract(decoded, topic.guidPath())
+    private static String extractSequence(RawMessage message, TopicConfig topic, CanonicalValue decoded) {
+        if (topic.sequencePaths().isEmpty()) {
+            return null;
+        }
+        StringJoiner sequence = new StringJoiner("|");
+        for (Path path : topic.sequencePaths()) {
+            sequence.add(extractRequired(message, path, decoded, "sequence"));
+        }
+        return sequence.toString();
+    }
+
+    private static String extractRequired(RawMessage message, Path path, CanonicalValue decoded, String what) {
+        return FieldExtractor.extract(decoded, path)
                 .orElseThrow(() -> new DecodeException(
-                        "no GUID at '" + topic.guidPath() + "' in message on topic " + message.topic()));
+                        "no " + what + " at '" + path + "' in message on topic " + message.topic()));
     }
 }

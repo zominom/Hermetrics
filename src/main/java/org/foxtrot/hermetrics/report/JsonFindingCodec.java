@@ -106,6 +106,8 @@ public final class JsonFindingCodec implements FindingCodec {
         stats.put("loadDistinctStates", verdict.stats().loadDistinctStates());
         stats.put("mainDuplicates", verdict.stats().mainDuplicates());
         stats.put("loadDuplicates", verdict.stats().loadDuplicates());
+        stats.put("missingSequencesInLoad", verdict.stats().missingSequencesInLoad());
+        stats.put("extraSequencesInLoad", verdict.stats().extraSequencesInLoad());
     }
 
     private static String payloadPreview(byte[] payload) {

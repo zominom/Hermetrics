@@ -18,7 +18,10 @@
       "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" -f /Users/orsap/IdeaProjects/hermetrics/pom.xml test)",
       "Bash(\"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn\" -f /Users/orsap/IdeaProjects/hermetrics/pom.xml -q -DskipTests package)",
       "Bash(grep -E \"ExampleConfigsTest|Tests run: [0-9]+, Fail.*Errors.*$|BUILD\")",
-      "Bash(awk '{print $5, $9}')"
+      "Bash(awk '{print $5, $9}')",
+      "Bash(awk '{print $5}')",
+      "Bash(grep -E \"Tests run: [0-9]+, Failures: [0-9]+, Errors: [0-9]+, Skipped: [0-9]+$|BUILD\")",
+      "Bash(grep -E \"Tests run: [0-9]+, Failures: [0-9]+, Errors: [0-9]+, Skipped: [0-9]+$|FAIL|BUILD\")"
     ]
   }
 }

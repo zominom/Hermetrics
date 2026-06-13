@@ -10,14 +10,14 @@ import org.foxtrot.hermetrics.canonical.Path;
 
 import java.util.Optional;
 
-public final class GuidExtractor {
+public final class FieldExtractor {
 
-    private GuidExtractor() {
+    private FieldExtractor() {
     }
 
-    public static Optional<String> extract(CanonicalValue root, Path guidPath) {
+    public static Optional<String> extract(CanonicalValue root, Path path) {
         CanonicalValue current = root;
-        for (Path.Segment segment : guidPath.segments()) {
+        for (Path.Segment segment : path.segments()) {
             current = step(current, segment);
             if (current == null) {
                 return Optional.empty();

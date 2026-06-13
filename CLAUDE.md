@@ -70,9 +70,19 @@ and is the early-warning test for breakage here.
 
 ## Deliberate semantics (not bugs)
 
-- A re-seen content hash is a **duplicate delivery** and does not move the
-  final state — so an A→B→A re-send compares as final B. Distinguishing genuine
-  reverts needs a sequence field (not yet available from the user's pipelines).
+- Update comparison has two modes per topic. With `sequencePath` (string or
+  array → composite key, extracted pre-normalization like the GUID and required
+  on every message): states are paired by sequence and each pair diffed —
+  `EQUAL` needs every pair equal; final state = max sequence (numeric-aware,
+  event-time tiebreak); same sequence + same hash = duplicate, same sequence +
+  new content = latest event time wins; pair mismatches with equal finals =
+  `EQUAL_DIVERGED` **with** diffs and missing/extra sequence counts in stats.
+  Without `sequencePath`: a re-seen content hash is a duplicate delivery that
+  does not move the final state (an A→B→A re-send compares as final B), finals
+  are last-by-arrival, and only the last unsequenced payload is retained in
+  state (earlier `StateVersion.stateJson` are nulled); sequenced topics retain
+  every version's payload to allow pair diffs — that's the memory trade-off.
+  Do not `ignore` the sequence field in rules, or a lagging load looks EQUAL.
 - GUID extraction runs on the **pre-normalization** tree so ignore rules cannot
   remove the matching key.
 - Equivalence rules (tolerances) run **at diff time only** and cannot affect

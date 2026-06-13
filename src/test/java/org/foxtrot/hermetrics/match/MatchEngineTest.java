@@ -32,6 +32,10 @@ class MatchEngineTest {
         return Observation.output(env, TOPIC, GUID, json(stateJson), ts);
     }
 
+    private static Observation outSeq(Env env, String sequence, String stateJson, long ts) {
+        return Observation.output(env, TOPIC, GUID, sequence, json(stateJson), ts);
+    }
+
     private static Observation entry(Env env, long ts) {
         return Observation.entry(env, "pipeline.in", GUID, ts);
     }
@@ -177,6 +181,90 @@ class MatchEngineTest {
         GuidState state = fold(engine,
                 out(Env.MAIN, "{\"v\": 1}", 1), out(Env.LOAD, "{\"v\": 1}", 2));
         assertThat(engine.decide(GUID, state, NOW).get(0).status()).isEqualTo(VerdictStatus.EQUAL);
+    }
+
+    @Test
+    void sequencedEqualWhenEveryMessageMatches() {
+        MatchEngine engine = engine(MatchPolicy.CohortMode.ASSUME_ALL, false);
+        GuidState state = fold(engine,
+                outSeq(Env.MAIN, "1", "{\"v\": 1}", 1), outSeq(Env.MAIN, "2", "{\"v\": 2}", 2),
+                outSeq(Env.LOAD, "1", "{\"v\": 1}", 3), outSeq(Env.LOAD, "2", "{\"v\": 2}", 4));
+        assertThat(engine.decide(GUID, state, NOW)).singleElement().satisfies(v -> {
+            assertThat(v.status()).isEqualTo(VerdictStatus.EQUAL);
+            assertThat(v.severity()).isEqualTo(Severity.OK);
+        });
+    }
+
+    @Test
+    void sequencedIntermediateMismatchIsDivergedWithEvidence() {
+        MatchEngine engine = engine(MatchPolicy.CohortMode.ASSUME_ALL, false);
+        GuidState state = fold(engine,
+                outSeq(Env.MAIN, "1", "{\"v\": 1}", 1), outSeq(Env.MAIN, "2", "{\"v\": 2}", 2),
+                outSeq(Env.LOAD, "1", "{\"v\": 9}", 3), outSeq(Env.LOAD, "2", "{\"v\": 2}", 4));
+        assertThat(engine.decide(GUID, state, NOW)).singleElement().satisfies(v -> {
+            assertThat(v.status()).isEqualTo(VerdictStatus.EQUAL_DIVERGED);
+            assertThat(v.severity()).isEqualTo(Severity.INFO);
+            assertThat(v.signature().entries()).containsExactly("v: value-changed");
+            assertThat(v.fieldDiffs()).hasSize(1);
+        });
+    }
+
+    @Test
+    void sequencedMissingIntermediateCountsInStats() {
+        MatchEngine engine = engine(MatchPolicy.CohortMode.ASSUME_ALL, false);
+        GuidState state = fold(engine,
+                outSeq(Env.MAIN, "1", "{\"v\": 1}", 1), outSeq(Env.MAIN, "2", "{\"v\": 2}", 2),
+                outSeq(Env.LOAD, "2", "{\"v\": 2}", 3));
+        assertThat(engine.decide(GUID, state, NOW)).singleElement().satisfies(v -> {
+            assertThat(v.status()).isEqualTo(VerdictStatus.EQUAL_DIVERGED);
+            assertThat(v.signature()).isNull();
+            assertThat(v.stats().missingSequencesInLoad()).isEqualTo(1);
+        });
+    }
+
+    @Test
+    void sequencedExtraMessageInLoadCountsInStats() {
+        MatchEngine engine = engine(MatchPolicy.CohortMode.ASSUME_ALL, false);
+        GuidState state = fold(engine,
+                outSeq(Env.MAIN, "2", "{\"v\": 2}", 1),
+                outSeq(Env.LOAD, "1", "{\"v\": 1}", 2), outSeq(Env.LOAD, "2", "{\"v\": 2}", 3));
+        assertThat(engine.decide(GUID, state, NOW)).singleElement().satisfies(v -> {
+            assertThat(v.status()).isEqualTo(VerdictStatus.EQUAL_DIVERGED);
+            assertThat(v.stats().extraSequencesInLoad()).isEqualTo(1);
+        });
+    }
+
+    @Test
+    void sequencedFinalStateFollowsTheSequenceNotArrivalOrder() {
+        MatchEngine engine = engine(MatchPolicy.CohortMode.ASSUME_ALL, false);
+        GuidState state = fold(engine,
+                outSeq(Env.MAIN, "2", "{\"v\": 2}", 1), outSeq(Env.MAIN, "1", "{\"v\": 1}", 2),
+                outSeq(Env.LOAD, "1", "{\"v\": 1}", 3), outSeq(Env.LOAD, "2", "{\"v\": 2}", 4));
+        assertThat(engine.decide(GUID, state, NOW).get(0).status()).isEqualTo(VerdictStatus.EQUAL);
+    }
+
+    @Test
+    void sequencedFinalUsesNumericOrderNotLexicographic() {
+        MatchEngine engine = engine(MatchPolicy.CohortMode.ASSUME_ALL, false);
+        GuidState state = fold(engine,
+                outSeq(Env.MAIN, "9", "{\"v\": 9}", 1), outSeq(Env.MAIN, "10", "{\"v\": 10}", 2),
+                outSeq(Env.LOAD, "9", "{\"v\": 9}", 3), outSeq(Env.LOAD, "10", "{\"v\": 99}", 4));
+        assertThat(engine.decide(GUID, state, NOW).get(0).status()).isEqualTo(VerdictStatus.DIFF);
+    }
+
+    @Test
+    void sequencedRedeliveryAndRewriteResolveBeforeJudging() {
+        MatchEngine engine = engine(MatchPolicy.CohortMode.ASSUME_ALL, false);
+        GuidState state = fold(engine,
+                outSeq(Env.MAIN, "1", "{\"v\": \"A\"}", 1),
+                outSeq(Env.MAIN, "1", "{\"v\": \"A\"}", 2),
+                outSeq(Env.MAIN, "1", "{\"v\": \"B\"}", 5),
+                outSeq(Env.LOAD, "1", "{\"v\": \"B\"}", 3));
+        assertThat(engine.decide(GUID, state, NOW)).singleElement().satisfies(v -> {
+            assertThat(v.status()).isEqualTo(VerdictStatus.EQUAL);
+            assertThat(v.stats().mainDuplicates()).isEqualTo(1);
+            assertThat(v.stats().mainDistinctStates()).isEqualTo(1);
+        });
     }
 
     @Test

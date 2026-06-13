@@ -33,7 +33,9 @@ class ObservationFactoryTest {
               },
               "topics": [
                 {"name": "pipeline.in", "role": "BOTH", "format": "json", "guidPath": "guid"},
-                {"name": "orders.enriched", "role": "OUTPUT", "format": "json", "guidPath": "doc.guid"}
+                {"name": "orders.enriched", "role": "OUTPUT", "format": "json", "guidPath": "doc.guid"},
+                {"name": "orders.versioned", "role": "OUTPUT", "format": "json",
+                 "guidPath": "doc.guid", "sequencePath": "doc.version"}
               ]
             }
             """;
@@ -99,6 +101,38 @@ class ObservationFactoryTest {
                 RawMessage.of("orders.enriched", "{\"doc\": {}}"), Env.MAIN))
                 .isInstanceOf(DecodeException.class)
                 .hasMessageContaining("doc.guid");
+    }
+
+    @Test
+    void sequenceIsExtractedForConfiguredTopics() {
+        Observation plain = factory.observe(
+                RawMessage.of("orders.enriched", "{\"doc\": {\"guid\": \"g1\"}}"), Env.MAIN).get(0);
+        assertThat(plain.sequence()).isNull();
+
+        Observation versioned = factory.observe(
+                RawMessage.of("orders.versioned", "{\"doc\": {\"guid\": \"g1\", \"version\": 3}}"), Env.MAIN).get(0);
+        assertThat(versioned.sequence()).isEqualTo("3");
+    }
+
+    @Test
+    void missingSequenceIsADecodeError() {
+        assertThatThrownBy(() -> factory.observe(
+                RawMessage.of("orders.versioned", "{\"doc\": {\"guid\": \"g1\"}}"), Env.MAIN))
+                .isInstanceOf(DecodeException.class)
+                .hasMessageContaining("sequence");
+    }
+
+    @Test
+    void compositeSequencePathsJoinTheirValues() {
+        CompareConfig composite = new ConfigLoader().load("""
+                {"topics": [{"name": "t", "format": "json", "guidPath": "guid",
+                             "sequencePath": ["eventType", "version"]}]}
+                """);
+        ObservationFactory compositeFactory =
+                new ObservationFactory(composite, DecoderRegistry.withDefaults(), new Normalizer());
+        Observation observation = compositeFactory.observe(
+                RawMessage.of("t", "{\"guid\": \"g1\", \"eventType\": \"created\", \"version\": 2}"), Env.MAIN).get(0);
+        assertThat(observation.sequence()).isEqualTo("created|2");
     }
 
     @Test
