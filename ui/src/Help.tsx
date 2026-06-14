@@ -1,8 +1,18 @@
+import { Tooltip } from "@mantine/core";
+
 export function Help({ text }: { text: string }) {
   return (
-    <span className="help" tabIndex={0} role="note" aria-label={text}>
-      ?<span className="tip">{text}</span>
-    </span>
+    <Tooltip
+      label={text}
+      multiline
+      w={300}
+      withArrow
+      events={{ hover: true, focus: true, touch: true }}
+    >
+      <span className="help-dot" tabIndex={0} role="note" aria-label={text}>
+        ?
+      </span>
+    </Tooltip>
   );
 }
 

@@ -1,4 +1,19 @@
 import { useEffect, useState } from "react";
+import {
+  ActionIcon,
+  Button,
+  Group,
+  NumberInput,
+  Paper,
+  Select,
+  Stack,
+  Switch,
+  Table,
+  Text,
+  TextInput,
+  Textarea,
+  Title,
+} from "@mantine/core";
 import { api } from "./api";
 import { CohortMode, CompareConfig, Role, RuleType } from "./types";
 import { Help, HELP, RULE_DOC, PARAM_DOC } from "./Help";
@@ -42,262 +57,273 @@ export function Editor({
   }
 
   const ruleSetNames = Object.keys(config.ruleSets);
+  const ruleTypeNames = ruleTypes.map((t) => t.type);
   const paramsFor = (type: string) => ruleTypes.find((t) => t.type === type)?.params ?? [];
 
   return (
-    <>
-      <div className="section">
-        <h2>Policy</h2>
-        <div className="row">
-          <div className="field">
-            <label>quiet (seconds) <Help text={HELP.quietMillis} /></label>
-            <input
-              type="number"
-              value={config.policy.quietMillis / 1000}
-              onChange={(e) => update((c) => (c.policy.quietMillis = Math.round(+e.target.value * 1000)))}
-            />
-          </div>
-          <div className="field">
-            <label>maxWait (seconds) <Help text={HELP.maxWaitMillis} /></label>
-            <input
-              type="number"
-              value={config.policy.maxWaitMillis / 1000}
-              onChange={(e) => update((c) => (c.policy.maxWaitMillis = Math.round(+e.target.value * 1000)))}
-            />
-          </div>
-          <div className="field">
-            <label>cohortMode <Help text={HELP.cohortMode} /></label>
-            <select
-              value={config.policy.cohortMode}
-              onChange={(e) => update((c) => (c.policy.cohortMode = e.target.value as CohortMode))}
-            >
-              <option>ENTRY_TOPICS</option>
-              <option>ASSUME_ALL</option>
-            </select>
-          </div>
-          <div className="field">
-            <label>strictIntermediates <Help text={HELP.strictIntermediates} /></label>
-            <select
-              value={String(config.policy.strictIntermediates)}
-              onChange={(e) => update((c) => (c.policy.strictIntermediates = e.target.value === "true"))}
-            >
-              <option value="false">false</option>
-              <option value="true">true</option>
-            </select>
-          </div>
-        </div>
-      </div>
+    <Stack gap="md">
+      <Paper withBorder p="md" radius="md">
+        <Title order={5} mb="sm">
+          Policy
+        </Title>
+        <Group align="flex-end" gap="md">
+          <NumberInput
+            label={<>quiet (seconds) <Help text={HELP.quietMillis} /></>}
+            w={150}
+            value={config.policy.quietMillis / 1000}
+            onChange={(v) => update((c) => (c.policy.quietMillis = Math.round(Number(v) * 1000)))}
+          />
+          <NumberInput
+            label={<>maxWait (seconds) <Help text={HELP.maxWaitMillis} /></>}
+            w={150}
+            value={config.policy.maxWaitMillis / 1000}
+            onChange={(v) => update((c) => (c.policy.maxWaitMillis = Math.round(Number(v) * 1000)))}
+          />
+          <Select
+            label={<>cohortMode <Help text={HELP.cohortMode} /></>}
+            w={180}
+            data={["ENTRY_TOPICS", "ASSUME_ALL"]}
+            value={config.policy.cohortMode}
+            onChange={(v) => update((c) => (c.policy.cohortMode = (v as CohortMode) ?? "ENTRY_TOPICS"))}
+          />
+          <Switch
+            label={<>strictIntermediates <Help text={HELP.strictIntermediates} /></>}
+            checked={config.policy.strictIntermediates}
+            onChange={(e) => update((c) => (c.policy.strictIntermediates = e.currentTarget.checked))}
+          />
+        </Group>
+      </Paper>
 
-      <div className="section">
-        <h2>Topics</h2>
-        <p className="hint">
-          Editing an existing topic (role, paths, rule set) applies live on Apply. Adding or removing a topic
-          changes which Kafka topics the job consumes — that set is fixed when the job starts, so it needs a
-          redeploy. When main and load use different physical topic names, the mapping lives in the deployment
-          config (per-cluster topicPrefix / topicOverrides), not here — these are the shared logical names.
-        </p>
-        <table>
-          <thead>
-            <tr>
-              <th>name <Help text={HELP.topicName} /></th>
-              <th>role <Help text={HELP.role} /></th>
-              <th>format <Help text={HELP.format} /></th>
-              <th>guidPath <Help text={HELP.guidPath} /></th>
-              <th>sequencePath <Help text={HELP.sequencePath} /></th>
-              <th>ruleSet <Help text={HELP.ruleSet} /></th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
+      <Paper withBorder p="md" radius="md">
+        <Title order={5} mb="xs">
+          Topics
+        </Title>
+        <Text c="dimmed" size="xs" mb="sm" maw={900}>
+          Editing an existing topic (role, paths, rule set) applies live on Apply. Adding or removing a topic changes which
+          Kafka topics the job consumes — that set is fixed when the job starts, so it needs a redeploy. When main and load
+          use different physical topic names, the mapping lives in the deployment config (per-cluster topicPrefix /
+          topicOverrides), not here — these are the shared logical names.
+        </Text>
+        <Table verticalSpacing="xs">
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>name <Help text={HELP.topicName} /></Table.Th>
+              <Table.Th>role <Help text={HELP.role} /></Table.Th>
+              <Table.Th>format <Help text={HELP.format} /></Table.Th>
+              <Table.Th>guidPath <Help text={HELP.guidPath} /></Table.Th>
+              <Table.Th>sequencePath <Help text={HELP.sequencePath} /></Table.Th>
+              <Table.Th>ruleSet <Help text={HELP.ruleSet} /></Table.Th>
+              <Table.Th />
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
             {config.topics.map((t, i) => (
-              <tr key={i}>
-                <td>
-                  <input className="mono" value={t.name} onChange={(e) => update((c) => (c.topics[i].name = e.target.value))} />
-                </td>
-                <td>
-                  <select value={t.role} onChange={(e) => update((c) => (c.topics[i].role = e.target.value as Role))}>
-                    <option>ENTRY</option>
-                    <option>OUTPUT</option>
-                    <option>BOTH</option>
-                  </select>
-                </td>
-                <td>
-                  <input value={t.format} onChange={(e) => update((c) => (c.topics[i].format = e.target.value))} />
-                </td>
-                <td>
-                  <input className="mono" value={t.guidPath} onChange={(e) => update((c) => (c.topics[i].guidPath = e.target.value))} />
-                </td>
-                <td>
-                  <input
-                    className="mono"
-                    value={seqToString(t.sequencePath)}
-                    onChange={(e) => update((c) => (c.topics[i].sequencePath = stringToSeq(e.target.value)))}
+              <Table.Tr key={i}>
+                <Table.Td>
+                  <TextInput value={t.name} onChange={(e) => update((c) => (c.topics[i].name = e.currentTarget.value))} />
+                </Table.Td>
+                <Table.Td>
+                  <Select
+                    w={110}
+                    data={["ENTRY", "OUTPUT", "BOTH"]}
+                    value={t.role}
+                    onChange={(v) => update((c) => (c.topics[i].role = (v as Role) ?? "OUTPUT"))}
                   />
-                </td>
-                <td>
-                  <select
+                </Table.Td>
+                <Table.Td>
+                  <Select
+                    w={90}
+                    data={["json", "xml"]}
+                    value={t.format}
+                    onChange={(v) => update((c) => (c.topics[i].format = v ?? "json"))}
+                  />
+                </Table.Td>
+                <Table.Td>
+                  <TextInput value={t.guidPath} onChange={(e) => update((c) => (c.topics[i].guidPath = e.currentTarget.value))} />
+                </Table.Td>
+                <Table.Td>
+                  <TextInput
+                    value={seqToString(t.sequencePath)}
+                    onChange={(e) => update((c) => (c.topics[i].sequencePath = stringToSeq(e.currentTarget.value)))}
+                  />
+                </Table.Td>
+                <Table.Td>
+                  <Select
+                    w={130}
+                    data={[{ value: "", label: "(default)" }, ...ruleSetNames.map((n) => ({ value: n, label: n }))]}
                     value={t.ruleSet ?? ""}
-                    onChange={(e) => update((c) => (c.topics[i].ruleSet = e.target.value || undefined))}
-                  >
-                    <option value="">(default)</option>
-                    {ruleSetNames.map((n) => (
-                      <option key={n}>{n}</option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <button className="ghost tiny" onClick={() => update((c) => c.topics.splice(i, 1))}>
+                    onChange={(v) => update((c) => (c.topics[i].ruleSet = v || undefined))}
+                  />
+                </Table.Td>
+                <Table.Td>
+                  <ActionIcon variant="subtle" color="red" onClick={() => update((c) => c.topics.splice(i, 1))}>
                     ✕
-                  </button>
-                </td>
-              </tr>
+                  </ActionIcon>
+                </Table.Td>
+              </Table.Tr>
             ))}
-          </tbody>
-        </table>
-        <div className="row" style={{ marginTop: 8 }}>
-          <button
-            className="ghost"
-            onClick={() => update((c) => c.topics.push({ name: "", role: "OUTPUT", format: "json", guidPath: "guid" }))}
-          >
-            + topic
-          </button>
-        </div>
-      </div>
+          </Table.Tbody>
+        </Table>
+        <Button
+          variant="default"
+          size="xs"
+          mt="sm"
+          onClick={() => update((c) => c.topics.push({ name: "", role: "OUTPUT", format: "json", guidPath: "guid" }))}
+        >
+          + topic
+        </Button>
+      </Paper>
 
-      <div className="section">
-        <h2>Rule sets</h2>
-        {ruleSetNames.map((name) => {
-          const rs = config.ruleSets[name];
-          return (
-            <div key={name} style={{ marginBottom: 16 }}>
-              <div className="row">
-                <strong>{name}</strong>
-                <label className="muted">
-                  <input
-                    type="checkbox"
-                    style={{ width: "auto" }}
+      <Paper withBorder p="md" radius="md">
+        <Title order={5} mb="sm">
+          Rule sets
+        </Title>
+        <Stack gap="lg">
+          {ruleSetNames.map((name) => {
+            const rs = config.ruleSets[name];
+            return (
+              <div key={name}>
+                <Group mb="xs">
+                  <Text fw={700}>{name}</Text>
+                  <Switch
+                    size="xs"
+                    label={<>nullsEqualAbsent <Help text={HELP.nullsEqualAbsent} /></>}
                     checked={rs.nullsEqualAbsent !== false}
-                    onChange={(e) => update((c) => (c.ruleSets[name].nullsEqualAbsent = e.target.checked))}
-                  />{" "}
-                  nullsEqualAbsent <Help text={HELP.nullsEqualAbsent} />
-                </label>
-                <label className="muted">
-                  <input
-                    type="checkbox"
-                    style={{ width: "auto" }}
+                    onChange={(e) => update((c) => (c.ruleSets[name].nullsEqualAbsent = e.currentTarget.checked))}
+                  />
+                  <Switch
+                    size="xs"
+                    label={<>emptyEqualsAbsent <Help text={HELP.emptyEqualsAbsent} /></>}
                     checked={!!rs.emptyEqualsAbsent}
-                    onChange={(e) => update((c) => (c.ruleSets[name].emptyEqualsAbsent = e.target.checked))}
-                  />{" "}
-                  emptyEqualsAbsent <Help text={HELP.emptyEqualsAbsent} />
-                </label>
-                {name !== "default" && (
-                  <button className="ghost tiny" onClick={() => update((c) => delete c.ruleSets[name])}>
-                    remove set
-                  </button>
-                )}
-              </div>
-              <table>
-                <thead>
-                  <tr>
-                    <th style={{ width: 150 }}>type <Help text={HELP.ruleType} /></th>
-                    <th>path <Help text={HELP.rulePath} /></th>
-                    <th>params <Help text={HELP.ruleParams} /></th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {rs.rules.map((rule, ri) => (
-                    <tr key={ri}>
-                      <td>
-                        <div className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
-                          <select
-                            style={{ flex: 1, minWidth: 0 }}
-                            value={rule.type}
-                            onChange={(e) => update((c) => (c.ruleSets[name].rules[ri] = { type: e.target.value, path: rule.path }))}
-                          >
-                            {ruleTypes.map((rt) => (
-                              <option key={rt.type}>{rt.type}</option>
+                    onChange={(e) => update((c) => (c.ruleSets[name].emptyEqualsAbsent = e.currentTarget.checked))}
+                  />
+                  {name !== "default" && (
+                    <Button variant="subtle" color="red" size="compact-xs" onClick={() => update((c) => delete c.ruleSets[name])}>
+                      remove set
+                    </Button>
+                  )}
+                </Group>
+                <Table verticalSpacing="xs">
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th w={170}>type <Help text={HELP.ruleType} /></Table.Th>
+                      <Table.Th>path <Help text={HELP.rulePath} /></Table.Th>
+                      <Table.Th>params <Help text={HELP.ruleParams} /></Table.Th>
+                      <Table.Th />
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {rs.rules.map((rule, ri) => (
+                      <Table.Tr key={ri}>
+                        <Table.Td>
+                          <Group gap={4} wrap="nowrap">
+                            <Select
+                              w={120}
+                              data={ruleTypeNames}
+                              value={rule.type}
+                              onChange={(v) => update((c) => (c.ruleSets[name].rules[ri] = { type: v ?? "ignore", path: rule.path }))}
+                            />
+                            <Help text={RULE_DOC[rule.type] ?? "Custom rule type registered in RuleTypeRegistry."} />
+                          </Group>
+                        </Table.Td>
+                        <Table.Td>
+                          <TextInput
+                            ff="monospace"
+                            value={rule.path}
+                            onChange={(e) => update((c) => (c.ruleSets[name].rules[ri].path = e.currentTarget.value))}
+                          />
+                        </Table.Td>
+                        <Table.Td>
+                          <Group gap="xs">
+                            {paramsFor(rule.type).map((p) => (
+                              <Group key={p.name} gap={4} wrap="nowrap">
+                                {renderParam(p, rule[p.name], (val) =>
+                                  update((c) => ((c.ruleSets[name].rules[ri] as any)[p.name] = val)),
+                                )}
+                                {PARAM_DOC[p.name] && <Help text={PARAM_DOC[p.name]} />}
+                              </Group>
                             ))}
-                          </select>
-                          <Help text={RULE_DOC[rule.type] ?? "Custom rule type registered in RuleTypeRegistry."} />
-                        </div>
-                      </td>
-                      <td>
-                        <input
-                          className="mono"
-                          value={rule.path}
-                          onChange={(e) => update((c) => (c.ruleSets[name].rules[ri].path = e.target.value))}
-                        />
-                      </td>
-                      <td>
-                        <div className="row">
-                          {paramsFor(rule.type).map((p) => (
-                            <span key={p.name} className="row" style={{ gap: 4, flexWrap: "nowrap" }}>
-                              <input
-                                placeholder={p.name}
-                                title={PARAM_DOC[p.name] ?? p.name}
-                                style={{ width: 130 }}
-                                value={String(rule[p.name] ?? "")}
-                                onChange={(e) =>
-                                  update((c) => ((c.ruleSets[name].rules[ri] as any)[p.name] = coerce(p.kind, e.target.value)))
-                                }
-                              />
-                              {PARAM_DOC[p.name] && <Help text={PARAM_DOC[p.name]} />}
-                            </span>
-                          ))}
-                          {paramsFor(rule.type).length === 0 && (
-                            <span className="muted" style={{ fontSize: 12 }}>
-                              no parameters
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <button className="ghost tiny" onClick={() => update((c) => c.ruleSets[name].rules.splice(ri, 1))}>
-                          ✕
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <button
-                className="ghost tiny"
-                style={{ marginTop: 6 }}
-                onClick={() => update((c) => c.ruleSets[name].rules.push({ type: "ignore", path: "" }))}
-              >
-                + rule
-              </button>
-            </div>
-          );
-        })}
-        <button
-          className="ghost"
+                            {paramsFor(rule.type).length === 0 && (
+                              <Text c="dimmed" size="xs">
+                                no parameters
+                              </Text>
+                            )}
+                          </Group>
+                        </Table.Td>
+                        <Table.Td>
+                          <ActionIcon variant="subtle" color="red" onClick={() => update((c) => c.ruleSets[name].rules.splice(ri, 1))}>
+                            ✕
+                          </ActionIcon>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+                <Button
+                  variant="default"
+                  size="compact-xs"
+                  mt={6}
+                  onClick={() => update((c) => c.ruleSets[name].rules.push({ type: "ignore", path: "" }))}
+                >
+                  + rule
+                </Button>
+              </div>
+            );
+          })}
+        </Stack>
+        <Button
+          variant="default"
+          size="xs"
+          mt="md"
           onClick={() => {
             const n = prompt("rule set name");
             if (n) update((c) => (c.ruleSets[n] = { rules: [] }));
           }}
         >
           + rule set
-        </button>
-      </div>
+        </Button>
+      </Paper>
 
       <RawJson config={config} onChange={onChange} />
 
-      <div className="section">
-        <div className="row end">
-          {validateMsg && <span className={`badge ${validateMsg.ok ? "OK" : "ERROR"}`}>{validateMsg.text}</span>}
-          {applyMsg && <span className={`badge ${applyMsg.ok ? "OK" : "ERROR"}`}>{applyMsg.text}</span>}
-          <button className="ghost" onClick={validate}>
+      <Paper withBorder p="md" radius="md">
+        <Group justify="flex-end">
+          {validateMsg && (
+            <Text c={validateMsg.ok ? "green" : "red"} size="sm">
+              {validateMsg.text}
+            </Text>
+          )}
+          {applyMsg && (
+            <Text c={applyMsg.ok ? "green" : "red"} size="sm">
+              {applyMsg.text}
+            </Text>
+          )}
+          <Button variant="default" onClick={validate}>
             Validate
-          </button>
-          <button className="action" onClick={apply}>
-            Apply to control topic
-          </button>
-        </div>
-      </div>
-    </>
+          </Button>
+          <Button onClick={apply}>Apply to control topic</Button>
+        </Group>
+      </Paper>
+    </Stack>
   );
+}
+
+function renderParam(
+  p: { name: string; kind: string },
+  value: unknown,
+  set: (val: unknown) => void,
+) {
+  if (p.kind === "number") {
+    return (
+      <NumberInput w={140} placeholder={p.name} value={value === undefined || value === null ? "" : (value as number)} onChange={(v) => set(v === "" ? "" : Number(v))} />
+    );
+  }
+  if (p.kind.startsWith("enum:")) {
+    return (
+      <Select w={140} placeholder={p.name} data={p.kind.slice(5).split(",")} value={(value as string) ?? null} onChange={(v) => set(v ?? "")} />
+    );
+  }
+  return <TextInput w={140} placeholder={p.name} value={String(value ?? "")} onChange={(e) => set(e.currentTarget.value)} />;
 }
 
 function RawJson({ config, onChange }: { config: CompareConfig; onChange: (c: CompareConfig) => void }) {
@@ -309,12 +335,17 @@ function RawJson({ config, onChange }: { config: CompareConfig; onChange: (c: Co
   }, [config]);
 
   return (
-    <div className="section">
-      <h2>Raw JSON</h2>
-      <textarea
-        rows={14}
+    <Paper withBorder p="md" radius="md">
+      <Title order={5} mb="xs">
+        Raw JSON
+      </Title>
+      <Textarea
+        autosize
+        minRows={10}
+        maxRows={24}
+        styles={{ input: { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 12 } }}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => setText(e.currentTarget.value)}
         onBlur={() => {
           try {
             onChange(JSON.parse(text));
@@ -323,9 +354,9 @@ function RawJson({ config, onChange }: { config: CompareConfig; onChange: (c: Co
             setError(String(err.message ?? err));
           }
         }}
+        error={error || undefined}
       />
-      {error && <div style={{ color: "var(--error)", marginTop: 6 }}>{error}</div>}
-    </div>
+    </Paper>
   );
 }
 
@@ -337,8 +368,4 @@ function stringToSeq(v: string): string | string[] | undefined {
   const parts = v.split(",").map((s) => s.trim()).filter(Boolean);
   if (parts.length === 0) return undefined;
   return parts.length === 1 ? parts[0] : parts;
-}
-
-function coerce(kind: string, v: string): unknown {
-  return kind === "number" && v !== "" ? Number(v) : v;
 }

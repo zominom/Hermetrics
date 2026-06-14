@@ -1,4 +1,16 @@
 import { useEffect, useState } from "react";
+import {
+  ActionIcon,
+  Anchor,
+  AppShell,
+  Badge,
+  Box,
+  Group,
+  NavLink,
+  Text,
+  Tooltip,
+  useMantineColorScheme,
+} from "@mantine/core";
 import { api } from "./api";
 import { CompareConfig, RuleType, defaultConfig } from "./types";
 import { Editor } from "./Editor";
@@ -12,7 +24,8 @@ export function App() {
   const [ruleTypes, setRuleTypes] = useState<RuleType[]>([]);
   const [source, setSource] = useState("");
   const [flinkUrl, setFlinkUrl] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState("");
+  const [online, setOnline] = useState<boolean | null>(null);
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
 
   useEffect(() => {
     api.ruleTypes().then(setRuleTypes).catch(() => {});
@@ -22,10 +35,11 @@ export function App() {
         setConfig(a.active ?? defaultConfig());
         setSource(a.source);
         setFlinkUrl(a.flinkUiUrl);
+        setOnline(true);
       })
-      .catch((e) => {
+      .catch(() => {
         setConfig(defaultConfig());
-        setLoadError(String(e.message ?? e));
+        setOnline(false);
       });
   }, []);
 
@@ -41,28 +55,41 @@ export function App() {
   }
 
   return (
-    <>
-      <div className="topbar">
-        <h1>hermetrics</h1>
-        <button className={`tab ${tab === "dashboard" ? "active" : ""}`} onClick={() => setTab("dashboard")}>
-          Dashboard
-        </button>
-        <button className={`tab ${tab === "editor" ? "active" : ""}`} onClick={() => setTab("editor")}>
-          Config
-        </button>
-        <div className="spacer" />
-        {flinkUrl && (
-          <a href={flinkUrl} target="_blank" rel="noreferrer">
-            Flink UI ↗
-          </a>
-        )}
-        <span className="muted">config source: {source || "?"}</span>
-      </div>
-      <div className="content">
-        {loadError && <div className="banner err">API unreachable: {loadError}</div>}
+    <AppShell header={{ height: 56 }} navbar={{ width: 200, breakpoint: "xs" }} padding="md">
+      <AppShell.Header>
+        <Group h="100%" px="md" gap="sm">
+          <Text fw={800} size="lg" style={{ letterSpacing: 1.5 }}>
+            hermetrics
+          </Text>
+          <Badge variant="dot" color={online === false ? "red" : "green"} size="sm">
+            {online === false ? "API offline" : "API online"}
+          </Badge>
+          <Box style={{ flex: 1 }} />
+          <Text size="xs" c="dimmed">
+            config: {source || "?"}
+          </Text>
+          {flinkUrl && (
+            <Anchor href={flinkUrl} target="_blank" size="sm">
+              Flink UI ↗
+            </Anchor>
+          )}
+          <Tooltip label="Toggle light / dark">
+            <ActionIcon variant="default" onClick={toggleColorScheme} aria-label="toggle color scheme">
+              {colorScheme === "dark" ? "☀" : "☾"}
+            </ActionIcon>
+          </Tooltip>
+        </Group>
+      </AppShell.Header>
+
+      <AppShell.Navbar p="sm">
+        <NavLink label="Dashboard" active={tab === "dashboard"} onClick={() => setTab("dashboard")} />
+        <NavLink label="Config" active={tab === "editor"} onClick={() => setTab("editor")} />
+      </AppShell.Navbar>
+
+      <AppShell.Main>
         {config && tab === "editor" && <Editor config={config} ruleTypes={ruleTypes} onChange={setConfig} />}
         {tab === "dashboard" && <Dashboard onIgnorePath={addIgnoreRule} />}
-      </div>
-    </>
+      </AppShell.Main>
+    </AppShell>
   );
 }
