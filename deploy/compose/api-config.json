@@ -1,0 +1,12 @@
+{
+  "port": 8080,
+  "bootstrapServers": "kafka:9092",
+  "controlTopic": "hermetrics.control",
+  "resultsTopic": "hermetrics.verdicts",
+  "rollupsTopic": "hermetrics.rollups",
+  "deadLetterTopic": "hermetrics.dead-letters",
+  "flinkUiUrl": "http://localhost:8081",
+  "tailSize": 500,
+  "findingsOffsetReset": "earliest",
+  "findingsStore": { "type": "kafka-tail" }
+}

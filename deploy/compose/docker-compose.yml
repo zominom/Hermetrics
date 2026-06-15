@@ -1,0 +1,119 @@
+name: hermetrics
+
+services:
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: hermetrics-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  kafka-setup:
+    image: apache/kafka:3.9.0
+    container_name: hermetrics-kafka-setup
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        set -e
+        BS=kafka:9092
+        T=/opt/kafka/bin/kafka-topics.sh
+        P=/opt/kafka/bin/kafka-console-producer.sh
+        for t in main.orders load.orders hermetrics.verdicts hermetrics.rollups hermetrics.dead-letters; do
+          $$T --bootstrap-server $$BS --create --if-not-exists --topic $$t --partitions 1 --replication-factor 1
+        done
+        $$T --bootstrap-server $$BS --create --if-not-exists --topic hermetrics.control \
+          --partitions 1 --replication-factor 1 --config cleanup.policy=compact
+        echo '{"guid":"g1","total":10,"traceId":"a"}' | $$P --bootstrap-server $$BS --topic main.orders
+        echo '{"guid":"g1","total":10,"traceId":"b"}' | $$P --bootstrap-server $$BS --topic load.orders
+        echo '{"guid":"g2","total":20,"traceId":"c"}' | $$P --bootstrap-server $$BS --topic main.orders
+        echo '{"guid":"g2","total":25,"traceId":"d"}' | $$P --bootstrap-server $$BS --topic load.orders
+        echo "topics created and seeded (g1 matches, g2 differs)."
+
+  jobmanager:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: hermetrics-flink:latest
+    container_name: hermetrics-jobmanager
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    command:
+      - standalone-job
+      - --job-classname
+      - org.foxtrot.hermetrics.flink.job.HermetricsJob
+      - /opt/hermetrics/job-config.json
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: jobmanager
+        blob.server.port: 6124
+        taskmanager.numberOfTaskSlots: 2
+    volumes:
+      - ./job-config.json:/opt/hermetrics/job-config.json:ro
+
+  taskmanager:
+    image: hermetrics-flink:latest
+    container_name: hermetrics-taskmanager
+    depends_on:
+      - jobmanager
+    command:
+      - taskmanager
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+
+  api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.api
+    image: hermetrics-api:latest
+    container_name: hermetrics-api
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api-config.json:/etc/hermetrics/api-config.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  ui:
+    build:
+      context: ../../ui
+      dockerfile: Dockerfile
+    image: hermetrics-ui:latest
+    container_name: hermetrics-ui
+    depends_on:
+      - api
+    ports:
+      - "5173:8080"
+    environment:
+      API_UPSTREAM: api:8080

@@ -1,0 +1,16 @@
+{
+  "main": { "bootstrapServers": "kafka:9092", "topicPrefix": "main.", "startingOffsets": "earliest" },
+  "load": { "bootstrapServers": "kafka:9092", "topicPrefix": "load.", "startingOffsets": "earliest" },
+  "control": { "bootstrapServers": "kafka:9092", "topic": "hermetrics.control" },
+  "results": { "type": "kafka", "options": { "bootstrapServers": "kafka:9092", "topic": "hermetrics.verdicts" } },
+  "rollups": { "windowMillis": 10000, "sink": { "type": "kafka", "options": { "bootstrapServers": "kafka:9092", "topic": "hermetrics.rollups" } } },
+  "deadLetters": { "type": "kafka", "options": { "bootstrapServers": "kafka:9092", "topic": "hermetrics.dead-letters" } },
+  "stateTtlMillis": 600000,
+  "checkpointIntervalMillis": 30000,
+  "emitEqualVerdicts": true,
+  "compare": {
+    "policy": { "quietMillis": 5000, "maxWaitMillis": 30000, "cohortMode": "ASSUME_ALL" },
+    "ruleSets": { "default": { "rules": [ { "type": "ignore", "path": "**.traceId" } ] } },
+    "topics": [ { "name": "orders", "role": "OUTPUT", "format": "json", "guidPath": "guid" } ]
+  }
+}
