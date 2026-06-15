@@ -17,7 +17,6 @@ import { CompareConfig, RuleType, defaultConfig } from "./types";
 import { Editor } from "./Editor";
 import { Dashboard } from "./Dashboard";
 import { TopicPage } from "./TopicPage";
-import { useFindings } from "./useFindings";
 
 type View = { kind: "overview" } | { kind: "topic"; name: string } | { kind: "config" };
 
@@ -29,7 +28,6 @@ export function App() {
   const [flinkUrl, setFlinkUrl] = useState<string | null>(null);
   const [online, setOnline] = useState<boolean | null>(null);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const findings = useFindings(view.kind !== "config");
 
   useEffect(() => {
     api.ruleTypes().then(setRuleTypes).catch(() => {});
@@ -59,13 +57,9 @@ export function App() {
   }
 
   const topicNames = useMemo(() => {
-    const fromConfig = (config?.topics ?? []).map((t) => t.name).filter(Boolean);
-    if (fromConfig.length) return [...new Set(fromConfig)].sort();
-    const seen = new Set<string>();
-    for (const r of findings.rollups) if (r.topic && r.topic !== "(cohort)") seen.add(String(r.topic));
-    for (const v of findings.verdicts) if (v.topic && v.topic !== "(cohort)") seen.add(String(v.topic));
-    return [...seen].sort();
-  }, [config, findings.rollups, findings.verdicts]);
+    const names = (config?.topics ?? []).map((t) => t.name).filter(Boolean);
+    return [...new Set(names)].sort();
+  }, [config]);
 
   return (
     <AppShell header={{ height: 56 }} navbar={{ width: 220, breakpoint: "xs" }} padding="md">
@@ -116,8 +110,8 @@ export function App() {
 
       <AppShell.Main>
         <Container size="xl" px={0}>
-          {view.kind === "overview" && <Dashboard findings={findings} onIgnorePath={addIgnoreRule} />}
-          {view.kind === "topic" && <TopicPage topic={view.name} findings={findings} onIgnorePath={addIgnoreRule} />}
+          {view.kind === "overview" && <Dashboard onIgnorePath={addIgnoreRule} />}
+          {view.kind === "topic" && <TopicPage key={view.name} topic={view.name} onIgnorePath={addIgnoreRule} />}
           {view.kind === "config" && config && <Editor config={config} ruleTypes={ruleTypes} onChange={setConfig} />}
         </Container>
       </AppShell.Main>

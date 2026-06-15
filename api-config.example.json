@@ -9,5 +9,6 @@
   "bootstrapComparePath": "/opt/hermetrics/compare.json",
   "tailSize": 500,
   "findingsOffsetReset": "latest",
+  "findingsStore": { "type": "kafka-tail" },
   "kafkaProperties": {}
 }

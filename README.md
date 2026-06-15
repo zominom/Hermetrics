@@ -130,7 +130,18 @@ cd ui && npm install && npm run dev                                # serves :517
 control/results/rollups/dead-letter topics, an optional Flink UI link, and a
 bootstrap compare config to show before the control topic has a message).
 Endpoints: `GET /api/rule-types`, `GET|POST /api/config/{active,validate,apply}`,
-`GET /api/{verdicts,rollups,dead-letters,summary}`.
+`GET /api/{verdicts,rollups,dead-letters,summary}` (the findings endpoints take an
+optional `?topic=`). **Interactive API docs are served at `/docs`** (Swagger UI),
+with the spec at `/openapi.yaml`.
+
+**Findings storage is pluggable.** By default the API reads findings from a bounded
+in-memory **Kafka tail** (`findingsStore.type: kafka-tail`) — a recent sample, not
+full history. To back it with **Elasticsearch** (or a custom DB) so the UI shows
+all diffs, set `findingsStore.type: elasticsearch` with options `{url, index,
+apiKey|username+password}`, and get findings into ES either via the job's
+`elasticsearch` results sink (`results.type: elasticsearch`) or — better at scale —
+Kafka Connect from the results topic. A custom store implements `FindingsStore` +
+registers in `FindingsStoreRegistry`; a custom writer implements `FindingSinkFactory`.
 
 ## Deploy to Kubernetes / OpenShift
 

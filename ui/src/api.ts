@@ -16,13 +16,17 @@ async function post<T>(url: string, body: unknown): Promise<T> {
   return res.json();
 }
 
+function topicParam(topic?: string): string {
+  return topic ? `&topic=${encodeURIComponent(topic)}` : "";
+}
+
 export const api = {
   ruleTypes: () => get<RuleType[]>("/api/rule-types"),
   activeConfig: () => get<ActiveConfig>("/api/config/active"),
   validate: (config: CompareConfig) => post<ValidateResult>("/api/config/validate", config),
   apply: (config: CompareConfig) => post<{ applied: boolean }>("/api/config/apply", config),
-  verdicts: (limit = 100) => get<Finding[]>(`/api/verdicts?limit=${limit}`),
-  rollups: (limit = 100) => get<Finding[]>(`/api/rollups?limit=${limit}`),
-  deadLetters: (limit = 100) => get<Finding[]>(`/api/dead-letters?limit=${limit}`),
-  summary: () => get<Summary>("/api/summary"),
+  verdicts: (limit = 100, topic?: string) => get<Finding[]>(`/api/verdicts?limit=${limit}${topicParam(topic)}`),
+  rollups: (limit = 100, topic?: string) => get<Finding[]>(`/api/rollups?limit=${limit}${topicParam(topic)}`),
+  deadLetters: (limit = 100, topic?: string) => get<Finding[]>(`/api/dead-letters?limit=${limit}${topicParam(topic)}`),
+  summary: (topic?: string) => get<Summary>(`/api/summary${topic ? `?topic=${encodeURIComponent(topic)}` : ""}`),
 };

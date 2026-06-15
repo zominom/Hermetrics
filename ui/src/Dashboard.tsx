@@ -1,13 +1,13 @@
 import { Alert, Badge, Button, Group, Paper, SimpleGrid, Stack, Switch, Title } from "@mantine/core";
-import { Findings } from "./useFindings";
+import { useFindings } from "./useFindings";
 import { Help, HELP } from "./Help";
 import { statusColor } from "./theme";
 import { DiffVolumeChart } from "./charts/DiffVolumeChart";
 import { TopicDiffStrip } from "./charts/TopicDiffStrip";
 import { DeadLettersTable, RollupsTable, VerdictsTable } from "./tables";
 
-export function Dashboard({ findings, onIgnorePath }: { findings: Findings; onIgnorePath: (path: string) => void }) {
-  const { summary, rollups, verdicts, deadLetters, error, auto, setAuto, refresh } = findings;
+export function Dashboard({ onIgnorePath }: { onIgnorePath: (path: string) => void }) {
+  const { summary, rollups, verdicts, deadLetters, error, auto, setAuto, refresh } = useFindings();
 
   return (
     <Stack gap="md">

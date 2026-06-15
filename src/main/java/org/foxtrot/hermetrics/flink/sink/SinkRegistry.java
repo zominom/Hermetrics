@@ -15,7 +15,8 @@ public final class SinkRegistry {
     public static SinkRegistry withDefaults() {
         return new SinkRegistry()
                 .register(new KafkaSinkFactory())
-                .register(new LoggingSinkFactory());
+                .register(new LoggingSinkFactory())
+                .register(new ElasticsearchSinkFactory());
     }
 
     public SinkRegistry register(FindingSinkFactory factory) {

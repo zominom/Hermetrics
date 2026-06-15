@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: hermetrics control-plane API
+  version: 1.0.0
+  description: >
+    Read-only findings (verdicts, rollups, dead-letters) plus the live comparison
+    config (read / validate / apply via the control topic). Findings come from the
+    configured findings store (the in-memory Kafka tail by default, or Elasticsearch).
+servers:
+  - url: /
+paths:
+  /api/health:
+    get:
+      summary: Liveness probe
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+  /api/rule-types:
+    get:
+      summary: Available normalization rule types and their parameters
+      responses:
+        "200":
+          description: Rule type catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RuleType" }
+  /api/config/active:
+    get:
+      summary: The compare config currently active in the running job
+      responses:
+        "200":
+          description: Active config (null until the control topic has a message)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active: { type: object, nullable: true, description: "compare section (policy, ruleSets, topics)" }
+                  source: { type: string, enum: [control, bootstrap, none] }
+                  flinkUiUrl: { type: string, nullable: true }
+  /api/config/validate:
+    post:
+      summary: Validate a compare config without applying it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, description: "compare section" }
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid: { type: boolean }
+                  error: { type: string }
+  /api/config/apply:
+    post:
+      summary: Publish a compare config to the control topic (hot-swaps the running job)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, description: "compare section" }
+      responses:
+        "200":
+          description: Applied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { applied: { type: boolean } }
+        "400":
+          description: Invalid config or publish failure
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /api/verdicts:
+    get:
+      summary: Recent verdicts (one per document x topic)
+      parameters:
+        - $ref: "#/components/parameters/topic"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Verdicts, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Verdict" }
+  /api/rollups:
+    get:
+      summary: Recent diff-signature rollups (one per topic x status x signature x window)
+      parameters:
+        - $ref: "#/components/parameters/topic"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Rollups, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Rollup" }
+  /api/dead-letters:
+    get:
+      summary: Messages that could not become observations
+      parameters:
+        - $ref: "#/components/parameters/topic"
+        - $ref: "#/components/parameters/limit"
+      responses:
+        "200":
+          description: Dead letters, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DeadLetter" }
+  /api/summary:
+    get:
+      summary: Verdict counts by status
+      parameters:
+        - $ref: "#/components/parameters/topic"
+      responses:
+        "200":
+          description: Status counts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total: { type: integer }
+                  counts:
+                    type: object
+                    additionalProperties: { type: integer }
+components:
+  parameters:
+    topic:
+      name: topic
+      in: query
+      required: false
+      schema: { type: string }
+      description: Restrict to one logical topic.
+    limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, default: 100 }
+  schemas:
+    Error:
+      type: object
+      properties: { error: { type: string } }
+    RuleType:
+      type: object
+      properties:
+        type: { type: string, example: numberTolerance }
+        params:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              kind: { type: string, description: "number | enum:A,B | text" }
+              required: { type: boolean }
+    Verdict:
+      type: object
+      properties:
+        type: { type: string, enum: [verdict] }
+        guid: { type: string }
+        topic: { type: string }
+        status:
+          type: string
+          enum: [EQUAL, EQUAL_DIVERGED, DIFF, MISSING_IN_LOAD, EXTRA_IN_LOAD, NOT_MIRRORED, TEST_TRAFFIC, UNANCHORED]
+        severity: { type: string, enum: [OK, INFO, WARN, ERROR] }
+        revision: { type: integer }
+        decidedAtMillis: { type: integer, format: int64 }
+        signatureId: { type: string }
+        signature: { type: array, items: { type: string } }
+        diffs:
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string }
+              kind: { type: string, enum: [added, removed, type-changed, value-changed] }
+              main: { type: string }
+              load: { type: string }
+        stats:
+          type: object
+          properties:
+            mainMessages: { type: integer }
+            loadMessages: { type: integer }
+            mainDistinctStates: { type: integer }
+            loadDistinctStates: { type: integer }
+            mainDuplicates: { type: integer }
+            loadDuplicates: { type: integer }
+            missingSequencesInLoad: { type: integer }
+            extraSequencesInLoad: { type: integer }
+    Rollup:
+      type: object
+      properties:
+        type: { type: string, enum: [rollup] }
+        windowStartMillis: { type: integer, format: int64 }
+        windowEndMillis: { type: integer, format: int64 }
+        topic: { type: string }
+        status: { type: string }
+        severity: { type: string }
+        signatureId: { type: string }
+        signature: { type: array, items: { type: string } }
+        count: { type: integer, format: int64 }
+        sampleGuids: { type: array, items: { type: string } }
+    DeadLetter:
+      type: object
+      properties:
+        type: { type: string, enum: [dead-letter] }
+        env: { type: string, enum: [MAIN, LOAD] }
+        topic: { type: string }
+        timestampMillis: { type: integer, format: int64 }
+        error: { type: string }
+        payloadPreview: { type: string }

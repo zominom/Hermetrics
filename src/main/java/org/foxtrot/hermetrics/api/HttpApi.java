@@ -37,6 +37,9 @@ public final class HttpApi {
         }
     }
 
+    public record Raw(String contentType, byte[] body) {
+    }
+
     private final HttpServer server;
     private final Map<String, Handler> routes = new HashMap<>();
 
@@ -100,8 +103,16 @@ public final class HttpApi {
     }
 
     private static void respond(HttpExchange exchange, int status, Object body) throws IOException {
-        byte[] bytes = JSON.writeValueAsBytes(body);
-        exchange.getResponseHeaders().add("Content-Type", "application/json");
+        byte[] bytes;
+        String contentType;
+        if (body instanceof Raw raw) {
+            bytes = raw.body();
+            contentType = raw.contentType();
+        } else {
+            bytes = JSON.writeValueAsBytes(body);
+            contentType = "application/json";
+        }
+        exchange.getResponseHeaders().add("Content-Type", contentType);
         exchange.sendResponseHeaders(status, bytes.length);
         exchange.getResponseBody().write(bytes);
         exchange.close();

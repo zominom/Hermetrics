@@ -13,7 +13,7 @@ export interface Findings {
   refresh: () => void;
 }
 
-export function useFindings(enabled: boolean): Findings {
+export function useFindings(topic?: string): Findings {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [rollups, setRollups] = useState<Finding[]>([]);
   const [verdicts, setVerdicts] = useState<Finding[]>([]);
@@ -23,7 +23,12 @@ export function useFindings(enabled: boolean): Findings {
 
   const refresh = useCallback(async () => {
     try {
-      const [s, r, v, d] = await Promise.all([api.summary(), api.rollups(500), api.verdicts(200), api.deadLetters(100)]);
+      const [s, r, v, d] = await Promise.all([
+        api.summary(topic),
+        api.rollups(500, topic),
+        api.verdicts(200, topic),
+        api.deadLetters(100, topic),
+      ]);
       setSummary(s);
       setRollups(r);
       setVerdicts(v);
@@ -32,17 +37,17 @@ export function useFindings(enabled: boolean): Findings {
     } catch (e: any) {
       setError(String(e.message ?? e));
     }
-  }, []);
+  }, [topic]);
 
   useEffect(() => {
-    if (enabled) refresh();
-  }, [enabled, refresh]);
+    refresh();
+  }, [refresh]);
 
   useEffect(() => {
-    if (!enabled || !auto) return;
+    if (!auto) return;
     const id = setInterval(refresh, 5000);
     return () => clearInterval(id);
-  }, [enabled, auto, refresh]);
+  }, [auto, refresh]);
 
   return { summary, rollups, verdicts, deadLetters, error, auto, setAuto, refresh };
 }

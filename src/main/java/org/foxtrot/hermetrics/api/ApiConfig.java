@@ -12,7 +12,8 @@ import java.util.Map;
 public record ApiConfig(int port, String bootstrapServers, String controlTopic,
                         String resultsTopic, String rollupsTopic, String deadLetterTopic,
                         String flinkUiUrl, String bootstrapComparePath, int tailSize,
-                        String findingsOffsetReset, Map<String, String> kafkaProperties) {
+                        String findingsOffsetReset, Map<String, String> kafkaProperties,
+                        String findingsStoreType, Map<String, String> findingsStoreOptions) {
 
     public static ApiConfig load(String jsonPath) {
         try {
@@ -28,7 +29,9 @@ public record ApiConfig(int port, String bootstrapServers, String controlTopic,
                     root.hasNonNull("bootstrapComparePath") ? root.get("bootstrapComparePath").asText() : null,
                     root.path("tailSize").asInt(500),
                     root.path("findingsOffsetReset").asText("latest"),
-                    stringMap(root.path("kafkaProperties")));
+                    stringMap(root.path("kafkaProperties")),
+                    root.path("findingsStore").path("type").asText("kafka-tail"),
+                    stringMap(root.path("findingsStore").path("options")));
         } catch (IOException e) {
             throw new IllegalArgumentException("cannot read api config '" + jsonPath + "'", e);
         }

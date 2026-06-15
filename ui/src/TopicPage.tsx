@@ -1,24 +1,13 @@
 import { Alert, Badge, Button, Group, Paper, Stack, Switch, Text, Title } from "@mantine/core";
-import { Findings } from "./useFindings";
+import { useFindings } from "./useFindings";
 import { Finding } from "./types";
 import { statusColor } from "./theme";
 import { DiffVolumeChart } from "./charts/DiffVolumeChart";
 import { DeadLettersTable, RollupsTable, VerdictsTable } from "./tables";
 
-export function TopicPage({
-  topic,
-  findings,
-  onIgnorePath,
-}: {
-  topic: string;
-  findings: Findings;
-  onIgnorePath: (path: string) => void;
-}) {
-  const { rollups, verdicts, deadLetters, error, auto, setAuto, refresh } = findings;
-  const topicRollups = rollups.filter((r) => r.topic === topic);
-  const topicVerdicts = verdicts.filter((v) => v.topic === topic);
-  const topicDeadLetters = deadLetters.filter((d) => d.topic === topic);
-  const counts = statusCounts(topicRollups);
+export function TopicPage({ topic, onIgnorePath }: { topic: string; onIgnorePath: (path: string) => void }) {
+  const { rollups, verdicts, deadLetters, error, auto, setAuto, refresh } = useFindings(topic);
+  const counts = statusCounts(rollups);
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
@@ -32,7 +21,10 @@ export function TopicPage({
       <Paper withBorder p="md" radius="md">
         <Group justify="space-between" mb="sm">
           <Title order={4}>
-            Topic: <Text span ff="monospace" inherit>{topic}</Text>
+            Topic:{" "}
+            <Text span ff="monospace" inherit>
+              {topic}
+            </Text>
           </Title>
           <Group gap="sm">
             <Switch label="auto-refresh" checked={auto} onChange={(e) => setAuto(e.currentTarget.checked)} size="sm" />
@@ -64,28 +56,28 @@ export function TopicPage({
         <Title order={5} mb="xs">
           Diff volume over time
         </Title>
-        <DiffVolumeChart rollups={topicRollups} />
+        <DiffVolumeChart rollups={rollups} />
       </Paper>
 
       <Paper withBorder p="md" radius="md">
         <Title order={5} mb="sm">
           Diff signatures
         </Title>
-        <RollupsTable rollups={topicRollups} onIgnorePath={onIgnorePath} />
+        <RollupsTable rollups={rollups} onIgnorePath={onIgnorePath} />
       </Paper>
 
       <Paper withBorder p="md" radius="md">
         <Title order={5} mb="sm">
           Recent verdicts
         </Title>
-        <VerdictsTable verdicts={topicVerdicts} />
+        <VerdictsTable verdicts={verdicts} />
       </Paper>
 
       <Paper withBorder p="md" radius="md">
         <Title order={5} mb="sm">
           Dead letters
         </Title>
-        <DeadLettersTable deadLetters={topicDeadLetters} />
+        <DeadLettersTable deadLetters={deadLetters} />
       </Paper>
     </Stack>
   );
