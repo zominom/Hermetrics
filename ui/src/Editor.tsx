@@ -29,6 +29,7 @@ export function Editor({
 }) {
   const [validateMsg, setValidateMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [applyMsg, setApplyMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [newSetName, setNewSetName] = useState("");
 
   function update(mut: (config: CompareConfig) => void) {
     const next = structuredClone(config);
@@ -54,6 +55,13 @@ export function Editor({
     } catch (e: any) {
       setApplyMsg({ ok: false, text: String(e.message ?? e) });
     }
+  }
+
+  function addRuleSet() {
+    const name = newSetName.trim();
+    if (!name || name in config.ruleSets) return;
+    update((c) => (c.ruleSets[name] = { rules: [] }));
+    setNewSetName("");
   }
 
   const ruleSetNames = Object.keys(config.ruleSets);
@@ -86,12 +94,13 @@ export function Editor({
             value={config.policy.cohortMode}
             onChange={(v) => update((c) => (c.policy.cohortMode = (v as CohortMode) ?? "ENTRY_TOPICS"))}
           />
-          <Switch
-            label={<>strictIntermediates <Help text={HELP.strictIntermediates} /></>}
-            checked={config.policy.strictIntermediates}
-            onChange={(e) => update((c) => (c.policy.strictIntermediates = e.currentTarget.checked))}
-          />
         </Group>
+        <Switch
+          mt="md"
+          label={<>strictIntermediates <Help text={HELP.strictIntermediates} /></>}
+          checked={config.policy.strictIntermediates}
+          onChange={(e) => update((c) => (c.policy.strictIntermediates = e.currentTarget.checked))}
+        />
       </Paper>
 
       <Paper withBorder p="md" radius="md">
@@ -271,17 +280,25 @@ export function Editor({
             );
           })}
         </Stack>
-        <Button
-          variant="default"
-          size="xs"
-          mt="md"
-          onClick={() => {
-            const n = prompt("rule set name");
-            if (n) update((c) => (c.ruleSets[n] = { rules: [] }));
-          }}
-        >
-          + rule set
-        </Button>
+        <Group mt="md" gap="xs" align="flex-end">
+          <TextInput
+            label="New rule set"
+            placeholder="name"
+            w={220}
+            value={newSetName}
+            onChange={(e) => setNewSetName(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") addRuleSet();
+            }}
+          />
+          <Button
+            variant="default"
+            onClick={addRuleSet}
+            disabled={!newSetName.trim() || newSetName.trim() in config.ruleSets}
+          >
+            Add rule set
+          </Button>
+        </Group>
       </Paper>
 
       <RawJson config={config} onChange={onChange} />
