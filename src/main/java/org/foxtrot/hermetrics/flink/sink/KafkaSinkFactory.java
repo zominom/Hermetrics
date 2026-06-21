@@ -28,9 +28,10 @@ public final class KafkaSinkFactory implements FindingSinkFactory {
         return KafkaSink.<KeyedRecord>builder()
                 .setBootstrapServers(config.require("bootstrapServers"))
                 .setKafkaProducerConfig(producerConfig(config))
-                .setRecordSerializer(KafkaRecordSerializationSchema.<KeyedRecord>builder()
+                .setRecordSerializer(KafkaRecordSerializationSchema.builder()
                         .setTopic(config.require("topic"))
-                        .setKeySerializationSchema(keySchema)
+                        .setKeySerializationSchema(new KeyedRecordKeySerializer())
+                        .setValueSerializationSchema(new KeyedRecordValueSerializer())
                         .setValueSerializationSchema(valueSchema)
                         .build())
                 .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
@@ -45,5 +46,21 @@ public final class KafkaSinkFactory implements FindingSinkFactory {
             }
         });
         return properties;
+    }
+
+    static final class KeyedRecordKeySerializer implements SerializationSchema<KeyedRecord> {
+
+        @Override
+        public byte[] serialize(KeyedRecord element) {
+            return element.key().getBytes(StandardCharsets.UTF_8);
+        }
+    }
+
+    static final class KeyedRecordValueSerializer implements SerializationSchema<KeyedRecord> {
+
+        @Override
+        public byte[] serialize(KeyedRecord element) {
+            return element.json().getBytes(StandardCharsets.UTF_8);
+        }
     }
 }
