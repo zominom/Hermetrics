@@ -39,7 +39,7 @@ export const HELP = {
   nullsEqualAbsent: "Treat a field explicitly set to null as equal to the field being absent.",
   emptyEqualsAbsent: "Treat an empty object {} or empty array [] as equal to the field being absent.",
   ruleType:
-    "ignore: drop the field before comparing. mask: replace its value with *** (presence still compared). unordered: sort the array before comparing. numberTolerance: allow a small numeric difference. timeTolerance: allow a small time difference.",
+    "ignore: drop the field before comparing. mask: replace its value with *** (presence still compared). unordered: sort the array before comparing. cast: convert a string field to a number or boolean (so XML fields can use numberTolerance). numberTolerance: allow a small numeric difference. timeTolerance: allow a small time difference.",
   rulePath:
     "Path pattern the rule matches. Supports dotted fields (a.b), array index (items[2]) or any index (items[]), * for any one field, ** for any depth (e.g. **.traceId), and \\. for a literal dot.",
   ruleParams:
@@ -61,6 +61,8 @@ export const RULE_DOC: Record<string, string> = {
     "Replaces the matching value with *** on both sides before comparing, so the value is never compared or shown in a verdict — only its presence/absence is. Use for PII you must not surface. No parameters.",
   unordered:
     "Sorts the matching array before comparing, so element order can't cause diffs. Use when a list's order isn't meaningful. Sorts after child rules run, so ignored sub-fields don't affect the order. No parameters.",
+  cast:
+    "Converts the matching string value to a real number or boolean before hashing and comparing. Mainly for XML, where every leaf decodes as a string — cast a numeric field so numberTolerance can apply, or so \"100\" and \"100.0\" compare equal. Values that don't parse are left unchanged. Parameter: to (NUMBER or BOOLEAN).",
   numberTolerance:
     "Treats two numbers at the matching path as equal when they differ by at most epsilon — absorbs floating-point drift and rounding. Applies only to numeric values. Parameter: epsilon.",
   timeTolerance:
@@ -68,6 +70,7 @@ export const RULE_DOC: Record<string, string> = {
 };
 
 export const PARAM_DOC: Record<string, string> = {
+  to: "Target type to convert the string into: NUMBER or BOOLEAN. Values that don't parse as that type are left as-is.",
   epsilon: "Maximum absolute numeric difference still treated as equal — e.g. 0.001 ignores sub-thousandth drift.",
   toleranceMillis:
     "Maximum time difference still treated as equal, in milliseconds (e.g. 5000 = 5 seconds). The field may be an ISO-8601 string or an epoch number.",

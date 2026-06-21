@@ -1,0 +1,17 @@
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+*.iws
+*.ipr
+.mvn/
+ui/node_modules/
+ui/dist/
+deploy/
+Dockerfile
+Dockerfile.api
+docker-compose*.yml
+*.bat
+job-config*.json
+api-config*.json

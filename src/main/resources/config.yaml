@@ -1,0 +1,7 @@
+rest:
+  port: 8081
+  bind-address: localhost
+parallelism:
+  default: 1
+taskmanager:
+  numberOfTaskSlots: 4

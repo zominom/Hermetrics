@@ -22,7 +22,7 @@ public final class ControlState {
         this.config = config;
         this.activeCompareJson = bootstrapConfig();
         KafkaConsumer<String, String> consumer = consumer();
-        consumer.subscribe(List.of(config.controlTopic()));
+        consumer.subscribe(List.of(config.control().topic()));
         Thread thread = new Thread(() -> run(consumer), "control-state");
         thread.setDaemon(true);
         thread.start();
@@ -37,7 +37,7 @@ public final class ControlState {
     }
 
     private KafkaConsumer<String, String> consumer() {
-        Map<String, Object> props = config.kafkaBase();
+        Map<String, Object> props = config.control().kafkaBase();
         props.put("group.id", "hermetrics-api-control-" + UUID.randomUUID());
         props.put("key.deserializer", StringDeserializer.class.getName());
         props.put("value.deserializer", StringDeserializer.class.getName());

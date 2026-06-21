@@ -19,7 +19,12 @@ class RuleCatalogTest {
     void describesBuiltinTypesSortedWithParams() {
         List<Map<String, Object>> described = new RuleCatalog(RuleTypeRegistry.withDefaults()).describe();
         assertThat(names(described))
-                .containsExactly("ignore", "mask", "numberTolerance", "timeTolerance", "unordered");
+                .containsExactly("cast", "ignore", "mask", "numberTolerance", "timeTolerance", "unordered");
+
+        Map<String, Object> cast = described.stream()
+                .filter(entry -> entry.get("type").equals("cast"))
+                .findFirst().orElseThrow();
+        assertThat((List<?>) cast.get("params")).hasSize(1);
 
         Map<String, Object> numberTolerance = described.stream()
                 .filter(entry -> entry.get("type").equals("numberTolerance"))

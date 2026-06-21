@@ -4,6 +4,7 @@ import org.foxtrot.hermetrics.rules.NormalizationRule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.foxtrot.hermetrics.canonical.path.PathPattern;
+import org.foxtrot.hermetrics.rules.builtin.CastRule;
 import org.foxtrot.hermetrics.rules.builtin.IgnoreRule;
 import org.foxtrot.hermetrics.rules.builtin.MaskRule;
 import org.foxtrot.hermetrics.rules.builtin.NumberToleranceRule;
@@ -26,7 +27,8 @@ public final class RuleTypeRegistry {
                 .register("unordered", (path, spec) -> new UnorderedRule(path))
                 .register("numberTolerance", (path, spec) ->
                         new NumberToleranceRule(path, decimal(spec, "epsilon")))
-                .register("timeTolerance", RuleTypeRegistry::timeTolerance);
+                .register("timeTolerance", RuleTypeRegistry::timeTolerance)
+                .register("cast", RuleTypeRegistry::cast);
     }
 
     public RuleTypeRegistry register(String type, RuleFactory factory) {
@@ -45,6 +47,11 @@ public final class RuleTypeRegistry {
                     "unknown rule type '" + type + "', registered: " + byType.keySet());
         }
         return factory;
+    }
+
+    private static NormalizationRule cast(PathPattern path, JsonNode spec) {
+        String to = required(spec, "to").asText().toUpperCase(Locale.ROOT);
+        return new CastRule(path, CastRule.TargetType.valueOf(to));
     }
 
     private static NormalizationRule timeTolerance(PathPattern path, JsonNode spec) {

@@ -43,6 +43,7 @@ public final class JobConfigLoader {
                 root.hasNonNull("checkpointIntervalMillis") ? root.get("checkpointIntervalMillis").asLong() : null,
                 root.hasNonNull("parallelism") ? root.get("parallelism").asInt() : null,
                 root.path("emitEqualVerdicts").asBoolean(true),
+                root.path("isLocal").asBoolean(false),
                 compareJson, compare);
 
         config.main().clusters().forEach(ClusterConfig::physicalToLogical);

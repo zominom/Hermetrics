@@ -13,6 +13,7 @@ public final class RuleCatalog {
             "ignore", List.of(),
             "mask", List.of(),
             "unordered", List.of(),
+            "cast", List.of(new Param("to", "enum:NUMBER,BOOLEAN", true)),
             "numberTolerance", List.of(new Param("epsilon", "number", true)),
             "timeTolerance", List.of(
                     new Param("toleranceMillis", "number", true),

@@ -20,9 +20,9 @@ public final class ControlPublisher {
     private final Producer<String, String> producer;
 
     public ControlPublisher(ApiConfig config, ConfigLoader configLoader) {
-        this.controlTopic = config.controlTopic();
+        this.controlTopic = config.control().topic();
         this.configLoader = configLoader;
-        Map<String, Object> props = config.kafkaBase();
+        Map<String, Object> props = config.control().kafkaBase();
         props.put("key.serializer", StringSerializer.class.getName());
         props.put("value.serializer", StringSerializer.class.getName());
         props.put("acks", "all");

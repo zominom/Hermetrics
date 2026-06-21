@@ -13,7 +13,8 @@ environmental noise, duplicate deliveries, upsert churn, and injected test data.
    only in load are your injected test traffic (`TEST_TRAFFIC`, excluded from parity).
 2. **Canonical normalization** — each payload is decoded (JSON, XML, pluggable)
    into one canonical tree and rewritten by per-topic rules: ignore noise fields,
-   mask PII, sort order-insensitive arrays, with `null` ≡ absent by default.
+   mask PII, sort order-insensitive arrays, cast XML string leaves to numbers or
+   booleans, with `null` ≡ absent by default.
 3. **Message-level parity for updates** — per (topic, GUID), messages fold into a
    timeline of distinct states. Topics with a `sequencePath` (one field or a
    combination identifying each message) get the strict contract: every main
@@ -88,6 +89,11 @@ Verdicts land on the results topic as JSON, keyed by `guid|topic` with increasin
 revisions — compact the topic and the latest verdict wins. Optional rollups emit
 windowed counts per (topic, status, diff signature).
 
+Set `"isLocal": true` in the job config to run the pipeline from `main()` in an
+embedded local cluster with the Flink Web UI on `localhost:8081` — handy for
+debugging without a standalone cluster. Flink settings are read from a
+`config.yaml` on the classpath (`src/main/resources/config.yaml`).
+
 ## Updating rules without redeploying
 
 The job broadcasts a control topic. Publish:
@@ -128,7 +134,14 @@ cd ui && npm install && npm run dev                                # serves :517
 
 `api-config.example.json` documents the API's settings (Kafka bootstrap, the
 control/results/rollups/dead-letter topics, an optional Flink UI link, and a
-bootstrap compare config to show before the control topic has a message).
+bootstrap compare config to show before the control topic has a message). Each
+topic may be a plain name (inheriting the top-level `bootstrapServers` /
+`kafkaProperties`) or an object `{topic, bootstrapServers, properties}` to read
+it from its own cluster with its own connection/auth.
+
+To run the API and frontend as a single container, build `Dockerfile.app` (a
+combined image: nginx serves the SPA and reverse-proxies `/api/` to the bundled
+API process) — separate from the job's `Dockerfile`.
 Endpoints: `GET /api/rule-types`, `GET|POST /api/config/{active,validate,apply}`,
 `GET /api/{verdicts,rollups,dead-letters,summary}` (the findings endpoints take an
 optional `?topic=`). **Interactive API docs are served at `/docs`** (Swagger UI),

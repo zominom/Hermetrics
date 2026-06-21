@@ -1,14 +1,25 @@
 {
   "port": 8080,
   "bootstrapServers": "load-kafka:9092",
+  "kafkaProperties": {},
   "controlTopic": "hermetrics.control",
-  "resultsTopic": "hermetrics.verdicts",
-  "rollupsTopic": "hermetrics.rollups",
+  "resultsTopic": {
+    "topic": "hermetrics.verdicts",
+    "bootstrapServers": "results-kafka:9093",
+    "properties": {
+      "security.protocol": "SASL_SSL",
+      "sasl.mechanism": "PLAIN",
+      "sasl.jaas.config": "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"api\" password=\"CHANGE_ME\";"
+    }
+  },
+  "rollupsTopic": {
+    "topic": "hermetrics.rollups",
+    "bootstrapServers": "rollups-kafka:9094"
+  },
   "deadLetterTopic": "hermetrics.dead-letters",
   "flinkUiUrl": "http://localhost:8081",
   "bootstrapComparePath": "/opt/hermetrics/compare.json",
   "tailSize": 500,
   "findingsOffsetReset": "latest",
-  "findingsStore": { "type": "kafka-tail" },
-  "kafkaProperties": {}
+  "findingsStore": { "type": "kafka-tail" }
 }

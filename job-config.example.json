@@ -62,6 +62,7 @@
   "stateTtlMillis": 7200000,
   "checkpointIntervalMillis": 60000,
   "emitEqualVerdicts": false,
+  "isLocal": false,
   "compare": {
     "policy": {
       "quietMillis": 300000,
@@ -77,7 +78,9 @@
           {"type": "ignore", "path": "**.traceId"},
           {"type": "ignore", "path": "**.processedAt"},
           {"type": "mask", "path": "customer.ssn"},
-          {"type": "timeTolerance", "path": "meta.updatedAt", "toleranceMillis": 5000}
+          {"type": "timeTolerance", "path": "meta.updatedAt", "toleranceMillis": 5000},
+          {"type": "cast", "path": "export.total", "to": "number"},
+          {"type": "numberTolerance", "path": "export.total", "epsilon": 0.01}
         ]
       },
       "orders": {

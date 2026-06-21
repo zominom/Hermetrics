@@ -20,11 +20,11 @@ public final class KafkaTailFindingsStore implements FindingsStore {
     private final TopicTail deadLetters;
 
     public KafkaTailFindingsStore(ApiConfig config) {
-        this.verdicts = new TopicTail(config, config.resultsTopic(), "verdicts");
-        this.rollups = new TopicTail(config, config.rollupsTopic(), "rollups");
-        this.deadLetters = config.deadLetterTopic() == null
+        this.verdicts = new TopicTail(config, config.results(), "verdicts");
+        this.rollups = new TopicTail(config, config.rollups(), "rollups");
+        this.deadLetters = config.deadLetters() == null
                 ? null
-                : new TopicTail(config, config.deadLetterTopic(), "deadletters");
+                : new TopicTail(config, config.deadLetters(), "deadletters");
     }
 
     @Override

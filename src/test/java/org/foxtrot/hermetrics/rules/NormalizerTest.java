@@ -5,6 +5,7 @@ import org.foxtrot.hermetrics.canonical.value.CanonicalNull;
 import org.foxtrot.hermetrics.canonical.value.CanonicalValue;
 import org.foxtrot.hermetrics.canonical.json.ContentHasher;
 import org.foxtrot.hermetrics.canonical.path.PathPattern;
+import org.foxtrot.hermetrics.rules.builtin.CastRule;
 import org.foxtrot.hermetrics.rules.builtin.IgnoreRule;
 import org.foxtrot.hermetrics.rules.builtin.MaskRule;
 import org.foxtrot.hermetrics.rules.builtin.UnorderedRule;
@@ -66,6 +67,28 @@ class NormalizerTest {
                 json("{\"items\": [{\"id\": 1, \"ts\": \"z\"}, {\"id\": 2, \"ts\": \"w\"}]}"), rules);
         assertThat(a).isEqualTo(b);
         assertThat(ContentHasher.hash(a)).isEqualTo(ContentHasher.hash(b));
+    }
+
+    @Test
+    void castTurnsXmlStringIntoNumberSoEquivalentFormsHashEqual() {
+        RuleSet rules = RuleSet.of(new CastRule(PathPattern.parse("amount"), CastRule.TargetType.NUMBER));
+        CanonicalValue main = NORMALIZER.normalize(json("{\"amount\": \"100\"}"), rules);
+        CanonicalValue load = NORMALIZER.normalize(json("{\"amount\": \"100.0\"}"), rules);
+        assertThat(main).isEqualTo(load);
+        assertThat(ContentHasher.hash(main)).isEqualTo(ContentHasher.hash(load));
+        assertThat(normalize("{\"amount\": \"100\"}", rules)).isEqualTo("{\"amount\":100}");
+    }
+
+    @Test
+    void castToBooleanIsCaseInsensitive() {
+        RuleSet rules = RuleSet.of(new CastRule(PathPattern.parse("flag"), CastRule.TargetType.BOOLEAN));
+        assertThat(normalize("{\"flag\": \"True\"}", rules)).isEqualTo("{\"flag\":true}");
+    }
+
+    @Test
+    void castLeavesUnparseableValuesUntouched() {
+        RuleSet rules = RuleSet.of(new CastRule(PathPattern.parse("amount"), CastRule.TargetType.NUMBER));
+        assertThat(normalize("{\"amount\": \"N/A\"}", rules)).isEqualTo("{\"amount\":\"N/A\"}");
     }
 
     @Test

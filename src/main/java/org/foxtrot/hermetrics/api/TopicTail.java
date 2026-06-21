@@ -19,17 +19,17 @@ public final class TopicTail {
     private final Deque<JsonNode> buffer = new ArrayDeque<>();
     private final KafkaConsumer<String, String> consumer;
 
-    public TopicTail(ApiConfig config, String topic, String role) {
+    public TopicTail(ApiConfig config, TopicEndpoint endpoint, String role) {
         this.capacity = config.tailSize();
-        Map<String, Object> props = config.kafkaBase();
+        Map<String, Object> props = endpoint.kafkaBase();
         props.put("group.id", "hermetrics-api-" + role + "-" + UUID.randomUUID());
         props.put("key.deserializer", StringDeserializer.class.getName());
         props.put("value.deserializer", StringDeserializer.class.getName());
         props.put("auto.offset.reset", config.findingsOffsetReset());
         props.put("enable.auto.commit", "false");
         this.consumer = new KafkaConsumer<>(props);
-        consumer.subscribe(List.of(topic));
-        Thread thread = new Thread(this::run, "tail-" + topic);
+        consumer.subscribe(List.of(endpoint.topic()));
+        Thread thread = new Thread(this::run, "tail-" + endpoint.topic());
         thread.setDaemon(true);
         thread.start();
     }
