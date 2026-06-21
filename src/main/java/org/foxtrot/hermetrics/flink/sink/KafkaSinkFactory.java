@@ -23,8 +23,6 @@ public final class KafkaSinkFactory implements FindingSinkFactory {
 
     @Override
     public Sink<KeyedRecord> create(SinkConfig config) {
-        SerializationSchema<KeyedRecord> keySchema = record -> record.key().getBytes(StandardCharsets.UTF_8);
-        SerializationSchema<KeyedRecord> valueSchema = record -> record.json().getBytes(StandardCharsets.UTF_8);
         return KafkaSink.<KeyedRecord>builder()
                 .setBootstrapServers(config.require("bootstrapServers"))
                 .setKafkaProducerConfig(producerConfig(config))
@@ -32,7 +30,6 @@ public final class KafkaSinkFactory implements FindingSinkFactory {
                         .setTopic(config.require("topic"))
                         .setKeySerializationSchema(new KeyedRecordKeySerializer())
                         .setValueSerializationSchema(new KeyedRecordValueSerializer())
-                        .setValueSerializationSchema(valueSchema)
                         .build())
                 .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                 .build();
